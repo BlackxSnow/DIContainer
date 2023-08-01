@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DI Container", "DI Container\DI Container.csproj", "{E7FA64F1-008E-4E7E-A1E9-369B0C8E8F57}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DIContainer", "DIContainer\DIContainer.csproj", "{E7FA64F1-008E-4E7E-A1E9-369B0C8E8F57}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
