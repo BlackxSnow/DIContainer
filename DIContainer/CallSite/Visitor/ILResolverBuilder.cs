@@ -6,7 +6,7 @@ namespace DIContainer.CallSite.Visitor
 {
     public class ILResolverBuilder
     {
-        private ILInjectorBuilder _ILInjectorBuilder;
+        private InjectorILBuilder _InjectorILBuilder;
 
         public Func<ServiceProviderScope, object?> Build(ServiceCallSite callSite)
         {

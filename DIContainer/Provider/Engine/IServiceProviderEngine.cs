@@ -1,7 +1,7 @@
 using DIContainer.CallSite;
 using DIContainer.Injector;
 
-namespace DIContainer.Provider
+namespace DIContainer.Provider.Engine
 {
     public interface IServiceProviderEngine
     {

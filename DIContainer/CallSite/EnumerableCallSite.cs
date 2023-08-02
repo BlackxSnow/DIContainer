@@ -1,4 +1,5 @@
 using System;
+using DIContainer.Service;
 
 namespace DIContainer.CallSite
 {
@@ -10,5 +11,9 @@ namespace DIContainer.CallSite
 
         public Type SingleServiceType { get; }
         public ServiceCallSite[] CallSites { get; }
+
+        public EnumerableCallSite(ServiceCacheInfo cacheInfo) : base(cacheInfo)
+        {
+        }
     }
 }

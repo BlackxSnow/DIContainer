@@ -1,9 +1,13 @@
 using System;
 using System.Collections.Generic;
 using DIContainer.CallSite;
+using DIContainer.CallSite.Visitor;
 using DIContainer.Injector;
 using DIContainer.NotableTypes;
+using DIContainer.Provider.Engine;
 using DIContainer.Provider.Temporary;
+using DIContainer.Service;
+using Microsoft.Extensions.Logging;
 
 namespace DIContainer.Provider
 {
@@ -15,26 +19,30 @@ namespace DIContainer.Provider
         internal NotableTypeFactory NotableTypeFactory { get; }
 
         private IServiceProviderEngine _Engine;
-        private Dictionary<Type, Func<ServiceProviderScope, object?>> _ServiceAccessors;
+        private Dictionary<ServiceIdentifier, ServiceAccessor> _ServiceAccessors;
 
-        public TService GetService<TService>()
+        private ILogger<ServiceProvider> _Logger;
+
+        public TService? GetService<TService>()
         {
-            throw new NotImplementedException();
+            return (TService?)GetService(typeof(TService));
         }
 
-        public object GetService(Type type)
+        public object? GetService(Type type)
         {
-            throw new NotImplementedException();
+            return GetService(type, RootScope);
         }
 
-        public TService GetService<TService>(IServiceProviderScope scope)
+        public object? GetService(Type type, ServiceProviderScope scope)
         {
-            throw new NotImplementedException();
-        }
-        
-        public object GetService(Type type, IServiceProviderScope scope)
-        {
-            throw new NotImplementedException();
+            var identifier = new ServiceIdentifier(type);
+            if (!_ServiceAccessors.TryGetValue(identifier, out ServiceAccessor accessor))
+            {
+                accessor = BuildServiceAccessor(identifier);
+                _ServiceAccessors.Add(identifier, accessor);
+            }
+
+            return accessor.Resolver?.Invoke(scope);
         }
         
         public void AddTemporaryServices(ITemporaryServiceContainer container)
@@ -45,6 +53,39 @@ namespace DIContainer.Provider
         private void OnTemporaryContainerDisposed(ITemporaryServiceContainer container)
         {
             throw new NotImplementedException();
+        }
+
+        private ServiceAccessor BuildServiceAccessor(ServiceIdentifier identifier)
+        {
+            ServiceCallSite? callSite = CallSiteFactory.GetCallSite(identifier);
+            if (callSite == null) return new ServiceAccessor { CallSite = callSite, Resolver = _ => null };
+
+            if (callSite.CacheInfo.Location == CacheLocation.Root)
+            {
+                object? instance = CallSiteRuntimeResolver.Instance.Resolve(callSite, RootScope);
+                return new ServiceAccessor() { CallSite = callSite, Resolver = _ => instance };
+            }
+
+            ServiceResolver resolver = _Engine.BuildResolver(callSite);
+            return new ServiceAccessor() { CallSite = callSite, Resolver = resolver };
+        }
+        
+        public ServiceProvider(IEnumerable<ServiceDescriptor> services, ILoggerFactory loggerFactory)
+        {
+            RootScope = new ServiceProviderScope(this, true);
+            CallSiteFactory = new CallSiteFactory(this, services, loggerFactory.CreateLogger<CallSiteFactory>());
+            _ServiceAccessors = new Dictionary<ServiceIdentifier, ServiceAccessor>();
+
+            _Engine = new RuntimeServiceProviderEngine();
+            
+            _Logger = loggerFactory.CreateLogger<ServiceProvider>();
+            _Logger.LogInformation("Logger created");
+        }
+
+        public ServiceProvider(IEnumerable<ServiceDescriptor> services) : this(services,
+            LoggerFactory.Create(b => b.AddConsole()))
+        {
+            
         }
     }
 }

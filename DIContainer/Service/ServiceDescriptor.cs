@@ -4,7 +4,7 @@ using DIContainer.Provider.Temporary;
 
 namespace DIContainer.Service
 {
-    public struct ServiceDescriptor
+    public class ServiceDescriptor
     {
         public Type ServiceType { get; }
         public ServiceLifetime Lifetime { get; }
@@ -13,5 +13,25 @@ namespace DIContainer.Service
         public object? ImplementationInstance { get; }
         public ServiceFactory? ImplementationFactory { get; }
         public IReadOnlyCollection<Type>? ImplementationNotableTypes { get; }
+
+        public ServiceDescriptor(Type serviceType, Type implementationType, ServiceLifetime lifetime)
+        {
+            ServiceType = serviceType;
+            ImplementationType = implementationType;
+            Lifetime = lifetime;
+        }
+
+        public ServiceDescriptor(Type serviceType, object instance)
+        {
+            ServiceType = serviceType;
+            ImplementationInstance = instance;
+        }
+
+        public ServiceDescriptor(Type serviceType, ServiceFactory factory, ServiceLifetime lifetime)
+        {
+            ServiceType = serviceType;
+            ImplementationFactory = factory;
+            Lifetime = lifetime;
+        }
     }
 }
