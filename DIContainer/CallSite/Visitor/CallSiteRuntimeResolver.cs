@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Reflection;
 using DIContainer.Injector;
 using DIContainer.Injector.Visitor;
@@ -40,7 +42,14 @@ namespace DIContainer.CallSite.Visitor
 
         protected override object? VisitEnumerable(EnumerableCallSite callSite, RuntimeResolverContext context)
         {
-            throw new System.NotImplementedException();
+            var results = Array.CreateInstance(callSite.SingleServiceType, callSite.CallSites.Length);
+            for (var i = 0; i < callSite.CallSites.Length; i++)
+            {
+                object? value = VisitCallSite(callSite.CallSites[i], context);
+                results.SetValue(value, i);
+            }
+
+            return results;
         }
 
         protected override object? VisitFactory(FactoryCallSite callSite, RuntimeResolverContext context)

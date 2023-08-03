@@ -137,5 +137,21 @@ namespace Tests
             Assert.NotNull(logger);
         }
 
+        [Fact]
+        public void ResolveMultipleImplementations()
+        {
+            var descriptors = new[]
+            {
+                new ServiceDescriptor(typeof(EmptyService), typeof(EmptyService), ServiceLifetime.Transient),
+                new ServiceDescriptor(typeof(IEmptyServiceContainer), 
+                    typeof(SingleDependencyConstructorService), ServiceLifetime.Transient),
+                new ServiceDescriptor(typeof(IEmptyServiceContainer), 
+                    typeof(SingleDependencyConstructorService), ServiceLifetime.Transient)
+            };
+            var provider = new ServiceProvider(descriptors, GetLoggerFactory());
+            var resolvedServices = provider.GetService<IEnumerable<IEmptyServiceContainer>>();
+            Assert.NotNull(resolvedServices);
+            Assert.Equal(2, resolvedServices.Count());
+        }
     }
 }

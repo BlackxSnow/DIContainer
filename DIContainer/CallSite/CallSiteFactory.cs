@@ -26,7 +26,8 @@ namespace DIContainer.CallSite
         private ServiceCallSite? BuildCallSite(ServiceIdentifier identifier)
         {
             return TryBuildExact(identifier) ??
-                   TryBuildOpenGeneric(identifier);
+                   TryBuildOpenGeneric(identifier) ??
+                   TryBuildEnumerable(identifier);
         }
         
         private ServiceCallSite? TryBuildExact(ServiceIdentifier identifier)
@@ -66,9 +67,75 @@ namespace DIContainer.CallSite
             return _CallSiteCache[cacheInfo.CacheKey] = callSite;
         }
 
-        private ServiceCallSite? TryBuildEnumerable(ServiceDescriptor descriptor, ServiceIdentifier identifier)
+        private ServiceCallSite? TryBuildEnumerable(ServiceIdentifier enumerableIdentifier)
         {
-            throw new NotImplementedException();
+            var cacheKey = new ServiceCacheKey(enumerableIdentifier);
+            if (_CallSiteCache.TryGetValue(cacheKey, out ServiceCallSite cachedCallSite)) return cachedCallSite;
+            if (!enumerableIdentifier.ServiceType.IsConstructedGenericType ||
+                enumerableIdentifier.ServiceType.GetGenericTypeDefinition() != typeof(IEnumerable<>)) return null;
+
+            var cacheLocation = CacheLocation.Root;
+            Type innerServiceType = enumerableIdentifier.ServiceType.GenericTypeArguments[0];
+            var innerIdentifier = new ServiceIdentifier(innerServiceType);
+
+            ServiceCallSite[] callSites;
+
+            if (innerServiceType.IsConstructedGenericType)
+            {
+                bool hasExact = _Descriptors.TryGetValue(innerIdentifier, out List<ServiceDescriptor> exactDescriptors);
+                ServiceIdentifier genericIdentifier = innerIdentifier.GetGenericTypeDefinition();
+                bool hasOpenGeneric =
+                    _Descriptors.TryGetValue(genericIdentifier, out List<ServiceDescriptor> genericDescriptors);
+                int descriptorCount = (exactDescriptors?.Count ?? 0) + (genericDescriptors?.Count ?? 0);
+                if (descriptorCount == 0) return null;
+
+                callSites = new ServiceCallSite[descriptorCount];
+                var currentIndex = 0;
+                if (hasExact)
+                {
+                    foreach (ServiceDescriptor descriptor in exactDescriptors!)
+                    {
+                        ServiceCallSite? exactCallSite = TryBuildExact(descriptor, innerIdentifier);
+                        Debug.Assert(exactCallSite != null);
+                        cacheLocation = CacheUtil.GetCommonCacheLocation(cacheLocation, exactCallSite!.CacheInfo.Location);
+                        callSites[currentIndex] = exactCallSite;
+                        currentIndex++;
+                    }
+                }
+
+                if (hasOpenGeneric)
+                {
+                    foreach (ServiceDescriptor descriptor in genericDescriptors!)
+                    {
+                        ServiceCallSite? genericCallSite = TryBuildOpenGeneric(genericIdentifier);
+                        Debug.Assert(genericCallSite != null);
+                        cacheLocation =
+                            CacheUtil.GetCommonCacheLocation(cacheLocation, genericCallSite!.CacheInfo.Location);
+                        callSites[currentIndex] = genericCallSite;
+                        currentIndex++;
+                    }
+                }
+            }
+            else if (_Descriptors.TryGetValue(innerIdentifier, out List<ServiceDescriptor> descriptors))
+            {
+                callSites = new ServiceCallSite[descriptors.Count];
+                for (var i = 0; i < descriptors.Count; i++)
+                {
+                    cachedCallSite = TryBuildExact(descriptors[i], innerIdentifier)!;
+                    Debug.Assert(callSites[i] != null);
+                    cacheLocation = CacheUtil.GetCommonCacheLocation(cacheLocation, cachedCallSite.CacheInfo.Location);
+                    callSites[i] = cachedCallSite;
+                }
+            }
+            else
+            {
+                return null;
+            }
+
+            ServiceCacheInfo cacheInfo = cacheLocation is CacheLocation.Scope or CacheLocation.Root
+                ? new ServiceCacheInfo(cacheLocation, cacheKey)
+                : new ServiceCacheInfo(CacheLocation.None, cacheKey);
+            return _CallSiteCache[cacheKey] = new EnumerableCallSite(cacheInfo, innerServiceType, callSites);
         }
 
         private ServiceCallSite? TryBuildOpenGeneric(ServiceIdentifier identifier)
