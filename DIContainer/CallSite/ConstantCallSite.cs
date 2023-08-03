@@ -13,7 +13,7 @@ namespace DIContainer.CallSite
         {
             if (!serviceType.IsInstanceOfType(instance))
             {
-                throw new ArgumentException(Exceptions.ConstantCantConvertToServiceType);
+                throw new ArgumentException(string.Format(Exceptions.ConstantCantConvertToServiceType, serviceType));
             }
             Value = instance;
             ServiceType = serviceType;

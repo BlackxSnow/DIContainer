@@ -74,5 +74,23 @@ namespace DIContainer {
                 return ResourceManager.GetString("NoValidConstructor", resourceCulture);
             }
         }
+        
+        internal static string OpenGenericServiceRequiresOpenGenericImplementation {
+            get {
+                return ResourceManager.GetString("OpenGenericServiceRequiresOpenGenericImplementation", resourceCulture);
+            }
+        }
+        
+        internal static string TypeCannotBeConstructed {
+            get {
+                return ResourceManager.GetString("TypeCannotBeConstructed", resourceCulture);
+            }
+        }
+        
+        internal static string GenericParameterCountServiceImplementationNotEqual {
+            get {
+                return ResourceManager.GetString("GenericParameterCountServiceImplementationNotEqual", resourceCulture);
+            }
+        }
     }
 }

@@ -19,18 +19,27 @@
         <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
     </resheader>
     <data name="ConstantCantConvertToServiceType" xml:space="preserve">
-        <value />
+        <value>Constant instance cannot be converted to service type {0}</value>
     </data>
     <data name="ImplementationTypeCantConvertToServiceType" xml:space="preserve">
-        <value />
+        <value>Implementation type {0} cannot be converted to service type {1}</value>
     </data>
     <data name="InvalidServiceDescriptor" xml:space="preserve">
-        <value />
+        <value>Invalid service descriptor</value>
     </data>
     <data name="NoConstructor" xml:space="preserve">
-        <value />
+        <value>No constructors matched for {0}</value>
     </data>
     <data name="NoValidConstructor" xml:space="preserve">
-        <value />
+        <value>No valid constructors for {0}</value>
+    </data>
+    <data name="OpenGenericServiceRequiresOpenGenericImplementation" xml:space="preserve">
+        <value>Open generic service {0} has non-open generic implementation {1}</value>
+    </data>
+    <data name="TypeCannotBeConstructed" xml:space="preserve">
+        <value>Implementation type {0} for service type {1} cannot be constructed</value>
+    </data>
+    <data name="GenericParameterCountServiceImplementationNotEqual" xml:space="preserve">
+        <value>Generic parameter count for service {0} is not equal to implementation generic parameter count {1}</value>
     </data>
 </root>
