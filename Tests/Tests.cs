@@ -123,5 +123,19 @@ namespace Tests
             Assert.NotNull(resolvedService);
             Assert.NotNull(resolvedService.Empty);
         }
+        
+        [Fact]
+        public void ResolveOpenGeneric()
+        {
+            ServiceDescriptor[] descriptors = new[]
+            {
+                new ServiceDescriptor(typeof(ILoggerFactory), typeof(LoggerFactory), ServiceLifetime.Singleton),
+                new ServiceDescriptor(typeof(ILogger<>), typeof(Logger<>), ServiceLifetime.Singleton)
+            };
+            var provider = new ServiceProvider(descriptors, GetLoggerFactory());
+            var logger = provider.GetService<ILogger<Tests>>();
+            Assert.NotNull(logger);
+        }
+
     }
 }
