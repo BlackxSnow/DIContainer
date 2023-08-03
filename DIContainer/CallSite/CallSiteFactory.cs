@@ -71,7 +71,7 @@ namespace DIContainer.CallSite
         
         private ConstructorCallSite BuildConstructorCallSite(ServiceCacheInfo cacheInfo, ServiceIdentifier identifier, Type implementationType)
         {
-            _Logger.LogDebug($"Building constructor CallSite for {identifier.ServiceType.Name}");
+            _Logger.LogDebug("Building constructor CallSite for {ServiceTypeName}", identifier.ServiceType.Name);
             ConstructorInfo[] constructors = implementationType.GetConstructors();
             if (constructors.Length == 0)
             {
@@ -117,17 +117,55 @@ namespace DIContainer.CallSite
         
         private void AddServices(IEnumerable<ServiceDescriptor> services)
         {
-            foreach (ServiceDescriptor serviceDescriptor in services)
+            foreach (ServiceDescriptor descriptor in services)
             {
-                var identifier = new ServiceIdentifier(serviceDescriptor);
+                if (descriptor.ServiceType.IsGenericTypeDefinition) ValidateOpenGenericDescriptor(descriptor);
+                else if (!descriptor.HasInstance() && !descriptor.HasFactory())
+                {
+                    Type? implementationType = descriptor.GetImplementationType();
+                    Debug.Assert(implementationType != null);
+
+                    if (!implementationType!.IsConstructable())
+                    {
+                        throw new ArgumentException(string.Format(Exceptions.TypeCannotBeConstructed,
+                            descriptor.ImplementationType, descriptor.ServiceType));
+                    }
+                }
+
+                var identifier = new ServiceIdentifier(descriptor);
                 if (!_Descriptors.TryGetValue(identifier, out List<ServiceDescriptor> descriptors))
                 {
                     descriptors = new List<ServiceDescriptor>();
                     _Descriptors.Add(identifier, descriptors);
                 }
-                descriptors.Add(serviceDescriptor);
+                descriptors.Add(descriptor);
             }
             _Logger.LogDebug("Added services");
+        }
+
+        private void ValidateOpenGenericDescriptor(ServiceDescriptor descriptor)
+        {
+            Debug.Assert(descriptor.ServiceType.IsGenericTypeDefinition);
+            Type? implementationType = descriptor.GetImplementationType();
+
+            if (implementationType is not { IsGenericTypeDefinition: true })
+            {
+                throw new ArgumentException(string.Format(
+                    Exceptions.OpenGenericServiceRequiresOpenGenericImplementation, descriptor.ServiceType,
+                    implementationType));
+            }
+
+            if (implementationType.IsAbstract || implementationType.IsInterface)
+            {
+                throw new ArgumentException(string.Format(Exceptions.TypeCannotBeConstructed, implementationType,
+                    descriptor.ServiceType));
+            }
+
+            if (implementationType.GetGenericArguments().Length != descriptor.ServiceType.GetGenericArguments().Length)
+            {
+                throw new ArgumentException(string.Format(Exceptions.GenericParameterCountServiceImplementationNotEqual,
+                    descriptor.ServiceType, implementationType));
+            }
         }
         
         public CallSiteFactory(ServiceProvider provider, IEnumerable<ServiceDescriptor> descriptors, ILogger<CallSiteFactory> logger)
