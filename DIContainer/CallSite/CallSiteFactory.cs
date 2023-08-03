@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
+using DIContainer.Extensions;
 using DIContainer.Provider;
 using DIContainer.Service;
 using Microsoft.Extensions.Logging;
@@ -19,9 +20,15 @@ namespace DIContainer.CallSite
         public ServiceCallSite? GetCallSite(ServiceIdentifier identifier)
         {
             var key = new ServiceCacheKey(identifier);
-            return _CallSiteCache.TryGetValue(key, out ServiceCallSite callSite) ? callSite : TryBuildExact(identifier);
+            return _CallSiteCache.TryGetValue(key, out ServiceCallSite callSite) ? callSite : BuildCallSite(identifier);
         }
 
+        private ServiceCallSite? BuildCallSite(ServiceIdentifier identifier)
+        {
+            return TryBuildExact(identifier) ??
+                   TryBuildOpenGeneric(identifier);
+        }
+        
         private ServiceCallSite? TryBuildExact(ServiceIdentifier identifier)
         {
             if (_Descriptors.TryGetValue(identifier, out List<ServiceDescriptor> descriptors))
@@ -63,10 +70,43 @@ namespace DIContainer.CallSite
         {
             throw new NotImplementedException();
         }
-        
+
+        private ServiceCallSite? TryBuildOpenGeneric(ServiceIdentifier identifier)
+        {
+            if (!identifier.ServiceType.IsConstructedGenericType) return null;
+
+            ServiceIdentifier genericIdentifier = identifier.GetGenericTypeDefinition();
+            if (_Descriptors.TryGetValue(genericIdentifier, out List<ServiceDescriptor> descriptors))
+            {
+                return TryBuildOpenGeneric(descriptors[0], identifier);
+            }
+
+            return null;
+        }
+
         private ServiceCallSite? TryBuildOpenGeneric(ServiceDescriptor descriptor, ServiceIdentifier identifier)
         {
-            throw new NotImplementedException();
+            if (!identifier.ServiceType.IsConstructedGenericType ||
+                identifier.ServiceType.GetGenericTypeDefinition() != descriptor.ServiceType)
+            {
+                return null;
+            }
+
+            var cacheKey = new ServiceCacheKey(identifier);
+            if (_CallSiteCache.TryGetValue(cacheKey, out ServiceCallSite callSite))
+            {
+                return callSite;
+            }
+
+            Type? implementationType = descriptor.GetImplementationType();
+            Debug.Assert(implementationType != null);
+
+            Type[] genericArguments = identifier.ServiceType.GetGenericArguments();
+            Type constructedType = implementationType!.MakeGenericType(genericArguments);
+
+            var cacheInfo = new ServiceCacheInfo(descriptor.Lifetime, identifier);
+            return _CallSiteCache[cacheKey] = BuildConstructorCallSite(cacheInfo, identifier, constructedType);
+            
         }
         
         private ConstructorCallSite BuildConstructorCallSite(ServiceCacheInfo cacheInfo, ServiceIdentifier identifier, Type implementationType)

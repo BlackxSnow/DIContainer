@@ -15,5 +15,10 @@ namespace DIContainer.Service
         {
             ServiceType = serviceType;
         }
+
+        public ServiceIdentifier GetGenericTypeDefinition()
+        {
+            return new ServiceIdentifier(ServiceType.GetGenericTypeDefinition());
+        }
     }
 }

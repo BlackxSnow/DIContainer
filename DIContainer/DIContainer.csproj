@@ -124,6 +124,7 @@
         <Compile Include="CallSite\Visitor\ILResolverContext.cs" />
         <Compile Include="CallSite\Visitor\RuntimeResolverContext.cs" />
         <Compile Include="Delegates.cs" />
+        <Compile Include="Extensions\TypeExtensions.cs" />
         <Compile Include="Injector\InjectorCallSite.cs" />
         <Compile Include="Injector\InjectorCallSiteFactory.cs" />
         <Compile Include="Injector\MethodInjectionPoint.cs" />
@@ -150,6 +151,7 @@
           <DependentUpon>Exceptions.resx</DependentUpon>
         </Compile>
         <Compile Include="Service\CacheLocation.cs" />
+        <Compile Include="Service\CacheUtil.cs" />
         <Compile Include="Service\ServiceCacheInfo.cs" />
         <Compile Include="Service\ServiceCacheKey.cs" />
         <Compile Include="Service\ServiceDescriptor.cs" />
