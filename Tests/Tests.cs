@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using DIContainer.Provider;
 using DIContainer.Service;
 using Microsoft.Extensions.Logging;
@@ -22,9 +24,14 @@ namespace Tests
             
         }
 
-        private class SingleDependencyConstructorService
+        private interface IEmptyServiceContainer
         {
-            public EmptyService Empty;
+            EmptyService Empty { get; }
+        }
+        
+        private class SingleDependencyConstructorService : IEmptyServiceContainer
+        {
+            public EmptyService Empty { get; }
             
             public SingleDependencyConstructorService(EmptyService emptyService)
             {
@@ -69,9 +76,22 @@ namespace Tests
             {
                 new ServiceDescriptor(typeof(EmptyService), typeof(EmptyService), ServiceLifetime.Transient),
             };
-            ServiceProvider provider = new ServiceProvider(descriptors, GetLoggerFactory());
+            var provider = new ServiceProvider(descriptors, GetLoggerFactory());
             var resolvedService = provider.GetService(typeof(EmptyService));
             Assert.NotNull(resolvedService);
+        }
+        
+        [Fact]
+        public void ResolveServiceMissingDependency()
+        {
+            ServiceDescriptor[] descriptors = new[]
+            {
+                new ServiceDescriptor(typeof(SingleDependencyConstructorService),
+                    typeof(SingleDependencyConstructorService), ServiceLifetime.Transient)
+            };
+            var provider = new ServiceProvider(descriptors, GetLoggerFactory());
+            Assert.Throws<InvalidOperationException>(() =>
+                provider.GetService(typeof(SingleDependencyConstructorService)));
         }
         
         [Fact]
@@ -83,8 +103,23 @@ namespace Tests
                 new ServiceDescriptor(typeof(SingleDependencyConstructorService),
                     typeof(SingleDependencyConstructorService), ServiceLifetime.Transient)
             };
-            ServiceProvider provider = new ServiceProvider(descriptors, GetLoggerFactory());
+            var provider = new ServiceProvider(descriptors, GetLoggerFactory());
             var resolvedService = (SingleDependencyConstructorService)provider.GetService(typeof(SingleDependencyConstructorService));
+            Assert.NotNull(resolvedService);
+            Assert.NotNull(resolvedService.Empty);
+        }
+
+        [Fact]
+        public void ResolveInterface()
+        {
+            ServiceDescriptor[] descriptors = new[]
+            {
+                new ServiceDescriptor(typeof(EmptyService), typeof(EmptyService), ServiceLifetime.Transient),
+                new ServiceDescriptor(typeof(IEmptyServiceContainer),
+                    typeof(SingleDependencyConstructorService), ServiceLifetime.Transient)
+            };
+            var provider = new ServiceProvider(descriptors, GetLoggerFactory());
+            var resolvedService = provider.GetService<IEmptyServiceContainer>();
             Assert.NotNull(resolvedService);
             Assert.NotNull(resolvedService.Empty);
         }
