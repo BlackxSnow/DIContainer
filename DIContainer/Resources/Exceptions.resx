@@ -42,4 +42,7 @@
     <data name="GenericParameterCountServiceImplementationNotEqual" xml:space="preserve">
         <value>Generic parameter count for service {0} is not equal to implementation generic parameter count {1}</value>
     </data>
+    <data name="MultipleInjectionMethodsNotSupported" xml:space="preserve">
+        <value>Injected type {0} contains multiple injection methods</value>
+    </data>
 </root>

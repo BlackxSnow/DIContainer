@@ -92,5 +92,11 @@ namespace DIContainer {
                 return ResourceManager.GetString("GenericParameterCountServiceImplementationNotEqual", resourceCulture);
             }
         }
+        
+        internal static string MultipleInjectionMethodsNotSupported {
+            get {
+                return ResourceManager.GetString("MultipleInjectionMethodsNotSupported", resourceCulture);
+            }
+        }
     }
 }

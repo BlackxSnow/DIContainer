@@ -1,4 +1,5 @@
 using System;
+using DIContainer.Injector;
 using DIContainer.Service;
 
 namespace DIContainer.CallSite
@@ -11,7 +12,8 @@ namespace DIContainer.CallSite
 
         public ServiceFactory Factory { get; }
 
-        public FactoryCallSite(ServiceCacheInfo cacheInfo, Type serviceType, ServiceFactory factory) : base(cacheInfo)
+        public FactoryCallSite(ServiceCacheInfo cacheInfo, Type serviceType, 
+            ServiceFactory factory) : base(cacheInfo, null)
         {
             ServiceType = serviceType;
             Factory = factory;

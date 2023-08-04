@@ -10,7 +10,8 @@ namespace DIContainer.CallSite.Visitor
     internal class CallSiteRuntimeResolver : CallSiteVisitor<RuntimeResolverContext, object?>
     {
         public static CallSiteRuntimeResolver Instance { get; } = new();
-        protected override InjectorCallSiteVisitor<RuntimeResolverContext> InjectorCallSiteVisitor { get; }
+
+        public InjectorRuntimeResolver InjectorCallSiteVisitor => InjectorRuntimeResolver.Instance;
 
         public object? Resolve(ServiceCallSite callSite, ServiceProviderScope scope)
         {
@@ -27,7 +28,10 @@ namespace DIContainer.CallSite.Visitor
                 arguments[i] = VisitCallSiteCache(parameterCallSite, context);
             }
 
-            return callSite.ConstructorInfo.Invoke(arguments);
+            object? result = callSite.ConstructorInfo.Invoke(arguments);
+            InjectorRuntimeResolver.Instance.Inject(callSite.InjectorCallSite,
+                new InjectorRuntimeResolverContext(context.Scope, result));
+            return result;
         }
 
         protected override object? VisitConstant(ConstantCallSite callSite, RuntimeResolverContext context)

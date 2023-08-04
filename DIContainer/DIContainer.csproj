@@ -125,6 +125,7 @@
         <Compile Include="CallSite\Visitor\RuntimeResolverContext.cs" />
         <Compile Include="Delegates.cs" />
         <Compile Include="Extensions\TypeExtensions.cs" />
+        <Compile Include="Injector\InjectionAttribute.cs" />
         <Compile Include="Injector\InjectorCallSite.cs" />
         <Compile Include="Injector\InjectorCallSiteFactory.cs" />
         <Compile Include="Injector\MethodInjectionPoint.cs" />
@@ -132,6 +133,7 @@
         <Compile Include="Injector\Visitor\InjectorILBuilder.cs" />
         <Compile Include="Injector\Visitor\InjectorCallSiteVisitor.cs" />
         <Compile Include="Injector\Visitor\InjectorRuntimeResolver.cs" />
+        <Compile Include="Injector\Visitor\InjectorRuntimeResolverContext.cs" />
         <Compile Include="NotableTypes\INotableTypeProvider.cs" />
         <Compile Include="NotableTypes\NotableType.cs" />
         <Compile Include="NotableTypes\NotableTypeFactory.cs" />

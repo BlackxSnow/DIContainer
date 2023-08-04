@@ -1,5 +1,6 @@
 using System;
 using System.Reflection;
+using DIContainer.Injector;
 using DIContainer.Service;
 
 namespace DIContainer.CallSite
@@ -13,7 +14,8 @@ namespace DIContainer.CallSite
         public ConstructorInfo ConstructorInfo { get; }
         public ServiceCallSite[] ParameterCallSites { get; }
 
-        public ConstructorCallSite(ServiceCacheInfo cacheInfo, Type serviceType, ConstructorInfo contructorInfo, ServiceCallSite[] parameterCallSites) : base(cacheInfo)
+        public ConstructorCallSite(ServiceCacheInfo cacheInfo, InjectorCallSite injectorCallSite, Type serviceType,
+            ConstructorInfo contructorInfo, ServiceCallSite[] parameterCallSites) : base(cacheInfo, injectorCallSite)
         {
             if (!serviceType.IsAssignableFrom(contructorInfo.DeclaringType))
             {

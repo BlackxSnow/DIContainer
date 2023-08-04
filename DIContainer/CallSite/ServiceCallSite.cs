@@ -15,9 +15,10 @@ namespace DIContainer.CallSite
 
         public bool IsTypeDisposable => typeof(IDisposable).IsAssignableFrom(ImplementationType);
 
-        public ServiceCallSite(ServiceCacheInfo cacheInfo)
+        public ServiceCallSite(ServiceCacheInfo cacheInfo, InjectorCallSite? injectorCallSite)
         {
             CacheInfo = cacheInfo;
+            InjectorCallSite = injectorCallSite;
         }
     }
 }

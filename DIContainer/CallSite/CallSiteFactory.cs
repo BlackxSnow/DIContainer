@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 using DIContainer.Extensions;
+using DIContainer.Injector;
 using DIContainer.Provider;
 using DIContainer.Service;
 using Microsoft.Extensions.Logging;
@@ -204,7 +205,8 @@ namespace DIContainer.CallSite
                 throw new InvalidOperationException(string.Format(Exceptions.NoValidConstructor, implementationType));
             }
             Debug.Assert(bestParameterCallSites != null);
-            return new ConstructorCallSite(cacheInfo, identifier.ServiceType, bestConstructor, bestParameterCallSites!);
+            InjectorCallSite injectorCallSite = _ServiceProvider.InjectorCallSiteFactory.GetCallSite(implementationType);
+            return new ConstructorCallSite(cacheInfo, injectorCallSite, identifier.ServiceType, bestConstructor, bestParameterCallSites!);
         }
 
         private ServiceCallSite[]? BuildParameterCallSites(ParameterInfo[] parameters)

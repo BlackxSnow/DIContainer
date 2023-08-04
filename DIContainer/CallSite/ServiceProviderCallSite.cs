@@ -1,4 +1,5 @@
 using System;
+using DIContainer.Injector;
 using DIContainer.Provider;
 using DIContainer.Service;
 using IServiceProvider = DIContainer.Provider.IServiceProvider;
@@ -11,8 +12,10 @@ namespace DIContainer.CallSite
         public override Type ServiceType => typeof(IServiceProvider);
         public override Type ImplementationType => typeof(ServiceProvider);
 
-        public ServiceProviderCallSite(ServiceCacheInfo cacheInfo) : base(cacheInfo)
+        public ServiceProviderCallSite(ServiceCacheInfo cacheInfo, InjectorCallSite injectorCallSite) : base(cacheInfo,
+            injectorCallSite)
         {
+
         }
     }
 }

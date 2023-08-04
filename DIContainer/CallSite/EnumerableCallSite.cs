@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DIContainer.Injector;
 using DIContainer.Service;
 
 namespace DIContainer.CallSite
@@ -13,8 +14,8 @@ namespace DIContainer.CallSite
         public Type SingleServiceType { get; }
         public ServiceCallSite[] CallSites { get; }
 
-        public EnumerableCallSite(ServiceCacheInfo cacheInfo, Type innerType, ServiceCallSite[] callSites) :
-            base(cacheInfo)
+        public EnumerableCallSite(ServiceCacheInfo cacheInfo, Type innerType,
+            ServiceCallSite[] callSites) : base(cacheInfo, null)
         {
             SingleServiceType = innerType;
             CallSites = callSites;

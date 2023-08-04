@@ -9,7 +9,7 @@ namespace DIContainer.CallSite
         public override Type ServiceType { get; }
         public override Type? ImplementationType => Value?.GetType(); 
 
-        public ConstantCallSite(Type serviceType, object instance) : base(ServiceCacheInfo.None(serviceType))
+        public ConstantCallSite(Type serviceType, object instance) : base(ServiceCacheInfo.None(serviceType), null)
         {
             if (!serviceType.IsInstanceOfType(instance))
             {

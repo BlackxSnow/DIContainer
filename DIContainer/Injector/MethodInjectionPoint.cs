@@ -3,9 +3,15 @@ using DIContainer.CallSite;
 
 namespace DIContainer.Injector
 {
-    public struct MethodInjectionPoint
+    public class MethodInjectionPoint
     {
         public MethodInfo Method { get; }
-        public ServiceCallSite CallSite { get; } 
+        public ServiceCallSite[] ParameterCallSites { get; }
+
+        public MethodInjectionPoint(MethodInfo method, ServiceCallSite[] parameterCallSites)
+        {
+            Method = method;
+            ParameterCallSites = parameterCallSites;
+        }
     }
 }

@@ -7,7 +7,6 @@ namespace DIContainer.CallSite.Visitor
 {
     public abstract class CallSiteVisitor<TContext, TResult>
     {
-        protected abstract InjectorCallSiteVisitor<TContext> InjectorCallSiteVisitor { get; }
 
         protected virtual TResult VisitCallSiteCache(ServiceCallSite callSite, TContext context)
         {

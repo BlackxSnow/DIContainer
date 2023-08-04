@@ -1,5 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Reflection;
+using DIContainer.CallSite;
+using DIContainer.Service;
+using Microsoft.Extensions.Logging;
 
 namespace DIContainer.Injector
 {
@@ -7,24 +13,68 @@ namespace DIContainer.Injector
     {
         private Dictionary<Type, InjectorCallSite> _CallSiteCache;
 
+        private CallSiteFactory _CallSiteFactory;
+        private ILogger<InjectorCallSiteFactory> _Logger;
+
         public InjectorCallSite GetCallSite(Type type)
         {
-            throw new NotImplementedException();
+            return _CallSiteCache.TryGetValue(type, out InjectorCallSite callSite) ? callSite : BuildCallSite(type);
         }
         
         private InjectorCallSite BuildCallSite(Type type)
         {
-            throw new NotImplementedException();
+            return new InjectorCallSite(type, GetMethodInjectionPoint(type), GetPropertyInjectionPoints(type));
         }
         
         private MethodInjectionPoint? GetMethodInjectionPoint(Type type)
         {
-            throw new NotImplementedException();
+            MethodInfo[] injectionMethods =
+                type.GetMethods().Where(m => m.GetCustomAttribute(typeof(InjectionAttribute)) != null).ToArray();
+            if (injectionMethods.Length == 0) return null;
+            if (injectionMethods.Length > 1)
+            {
+                throw new InvalidOperationException(
+                    string.Format(Exceptions.MultipleInjectionMethodsNotSupported, type));
+            }
+
+            MethodInfo method = injectionMethods.First();
+            ParameterInfo[] parameters = method.GetParameters();
+            var parameterCallSites = new ServiceCallSite?[parameters.Length];
+            
+            for(var i = 0; i < parameters.Length; i++)
+            {
+                var parameterServiceIdentifier = new ServiceIdentifier(parameters[i].ParameterType);
+                ServiceCallSite? parameterCallSite = _CallSiteFactory.GetCallSite(parameterServiceIdentifier);
+                parameterCallSites[i] = parameterCallSite;
+            }
+
+            return new MethodInjectionPoint(method, parameterCallSites);
         }
         
         private PropertyInjectionPoint[]? GetPropertyInjectionPoints(Type type)
         {
-            throw new NotImplementedException();
+            PropertyInfo[] injectionProperties = type.GetProperties()
+                .Where(p => p.GetCustomAttribute<InjectionAttribute>() != null).ToArray();
+
+            if (injectionProperties.Length == 0) return null;
+            
+            var injectionPoints = new PropertyInjectionPoint?[injectionProperties.Count()];
+
+            for (var i = 0; i < injectionProperties.Length; i++)
+            {
+                var propertyIdentifier = new ServiceIdentifier(injectionProperties[i].PropertyType);
+                ServiceCallSite? propertyCallSite = _CallSiteFactory.GetCallSite(propertyIdentifier);
+                injectionPoints[i] = new PropertyInjectionPoint(injectionProperties[i], propertyCallSite);
+            }
+
+            return injectionPoints;
+        }
+
+        public InjectorCallSiteFactory(ILogger<InjectorCallSiteFactory> logger, CallSiteFactory callSiteFactory)
+        {
+            _Logger = logger;
+            _CallSiteCache = new Dictionary<Type, InjectorCallSite>();
+            _CallSiteFactory = callSiteFactory;
         }
     }
 }
