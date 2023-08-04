@@ -14,7 +14,7 @@ namespace DIContainer.CallSite
         public ConstructorInfo ConstructorInfo { get; }
         public ServiceCallSite[] ParameterCallSites { get; }
 
-        public ConstructorCallSite(ServiceCacheInfo cacheInfo, InjectorCallSite injectorCallSite, Type serviceType,
+        public ConstructorCallSite(ServiceCacheInfo cacheInfo, InjectorCallSite? injectorCallSite, Type serviceType,
             ConstructorInfo contructorInfo, ServiceCallSite[] parameterCallSites) : base(cacheInfo, injectorCallSite)
         {
             if (!serviceType.IsAssignableFrom(contructorInfo.DeclaringType))

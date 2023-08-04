@@ -73,8 +73,11 @@ namespace DIContainer.Provider
         public ServiceProvider(IEnumerable<ServiceDescriptor> services, ILoggerFactory loggerFactory)
         {
             RootScope = new ServiceProviderScope(this, true);
-            CallSiteFactory = new CallSiteFactory(this, services, loggerFactory.CreateLogger<CallSiteFactory>());
-            InjectorCallSiteFactory = new InjectorCallSiteFactory(loggerFactory.CreateLogger<InjectorCallSiteFactory>(), CallSiteFactory);
+            var callSiteFactory = new CallSiteFactory(services, loggerFactory.CreateLogger<CallSiteFactory>());
+            InjectorCallSiteFactory = new InjectorCallSiteFactory(loggerFactory.CreateLogger<InjectorCallSiteFactory>(), callSiteFactory);
+            callSiteFactory.InjectorCallSiteFactory = InjectorCallSiteFactory;
+            CallSiteFactory = callSiteFactory;
+            
             _ServiceAccessors = new Dictionary<ServiceIdentifier, ServiceAccessor>();
 
             _Engine = new RuntimeServiceProviderEngine();

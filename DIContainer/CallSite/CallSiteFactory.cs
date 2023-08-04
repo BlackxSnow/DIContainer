@@ -10,9 +10,9 @@ using Microsoft.Extensions.Logging;
 
 namespace DIContainer.CallSite
 {
-    public class CallSiteFactory : ICallSiteFactory
+    internal class CallSiteFactory : ICallSiteFactory
     {
-        private ServiceProvider _ServiceProvider;
+        internal IInjectorCallSiteFactory? InjectorCallSiteFactory { get; set; }
         private Dictionary<ServiceIdentifier, List<ServiceDescriptor>> _Descriptors;
         private Dictionary<ServiceCacheKey, ServiceCallSite> _CallSiteCache;
 
@@ -205,7 +205,7 @@ namespace DIContainer.CallSite
                 throw new InvalidOperationException(string.Format(Exceptions.NoValidConstructor, implementationType));
             }
             Debug.Assert(bestParameterCallSites != null);
-            InjectorCallSite injectorCallSite = _ServiceProvider.InjectorCallSiteFactory.GetCallSite(implementationType);
+            InjectorCallSite? injectorCallSite = InjectorCallSiteFactory?.GetCallSite(implementationType);
             return new ConstructorCallSite(cacheInfo, injectorCallSite, identifier.ServiceType, bestConstructor, bestParameterCallSites!);
         }
 
@@ -277,10 +277,9 @@ namespace DIContainer.CallSite
             }
         }
         
-        public CallSiteFactory(ServiceProvider provider, IEnumerable<ServiceDescriptor> descriptors, ILogger<CallSiteFactory> logger)
+        public CallSiteFactory(IEnumerable<ServiceDescriptor> descriptors, ILogger<CallSiteFactory> logger)
         {
             _Logger = logger;
-            _ServiceProvider = provider;
             _Descriptors = new Dictionary<ServiceIdentifier, List<ServiceDescriptor>>();
             _CallSiteCache = new Dictionary<ServiceCacheKey, ServiceCallSite>();
             AddServices(descriptors);
