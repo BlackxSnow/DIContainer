@@ -53,8 +53,9 @@ namespace DIContainer.Injector
         
         private PropertyInjectionPoint[]? GetPropertyInjectionPoints(Type type)
         {
-            PropertyInfo[] injectionProperties = type.GetProperties()
-                .Where(p => p.GetCustomAttribute<InjectionAttribute>() != null).ToArray();
+            PropertyInfo[] injectionProperties =
+                type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                    .Where(p => p.GetCustomAttribute<InjectionAttribute>() != null).ToArray();
 
             if (injectionProperties.Length == 0) return null;
             
@@ -62,8 +63,14 @@ namespace DIContainer.Injector
 
             for (var i = 0; i < injectionProperties.Length; i++)
             {
-                var propertyIdentifier = new ServiceIdentifier(injectionProperties[i].PropertyType);
+                PropertyInfo property = injectionProperties[i];
+                var propertyIdentifier = new ServiceIdentifier(property.PropertyType);
                 ServiceCallSite? propertyCallSite = _CallSiteFactory.GetCallSite(propertyIdentifier);
+                if (property.SetMethod == null)
+                {
+                    throw new InvalidOperationException(
+                        string.Format(Exceptions.InjectionPropertyNoSetter, property.Name, type));
+                }
                 injectionPoints[i] = new PropertyInjectionPoint(injectionProperties[i], propertyCallSite);
             }
 

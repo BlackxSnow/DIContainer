@@ -1,3 +1,4 @@
+using System.Reflection;
 using DIContainer.CallSite;
 using DIContainer.CallSite.Visitor;
 
@@ -28,7 +29,9 @@ namespace DIContainer.Injector.Visitor
 
         protected override void VisitSingleProperty(PropertyInjectionPoint property, InjectorRuntimeResolverContext context)
         {
-            throw new System.NotImplementedException();
+            MethodInfo setter = property.Property.GetSetMethod(true);
+            object? value = CallSiteRuntimeResolver.Instance.Resolve(property.CallSite, context.Scope);
+            setter.Invoke(context.Instance, new []{value});
         }
     }
 }

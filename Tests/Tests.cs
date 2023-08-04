@@ -176,12 +176,72 @@ namespace Tests
                 new ServiceDescriptor(typeof(MethodInjectedService), typeof(MethodInjectedService), ServiceLifetime.Transient)
             };
             var provider = new ServiceProvider(descriptors, GetLoggerFactory());
-            var resolvedServices = provider.GetService<MethodInjectedService>();
-            Assert.NotNull(resolvedServices);
-            Assert.NotNull(resolvedServices.Empty);
-            Assert.NotNull(resolvedServices.Empty.Empty);
+            var resolvedService = provider.GetService<MethodInjectedService>();
+            Assert.NotNull(resolvedService);
+            Assert.NotNull(resolvedService.Empty);
+            Assert.NotNull(resolvedService.Empty.Empty);
         }
         
+        private class PublicPropertyInjectedService
+        {
+            [Injection]
+            public EmptyServiceContainer Empty { get; set; }
+        }
 
+        private class PrivateSetPropertyInjectedService
+        {
+            [Injection] public EmptyServiceContainer Empty { get; private set; }
+        }
+        private class PrivatePropertyInjectedService
+        {
+            [Injection] private EmptyServiceContainer _Empty { get; set; }
+            public EmptyServiceContainer Empty => _Empty;
+        }
+        
+        private class MultiplePropertyInjectedService
+        {
+            [Injection] private EmptyServiceContainer Empty { get; set; }
+            public EmptyServiceContainer EmptyP => Empty;
+            [Injection] public EmptyServiceContainer Empty2 { get; set; }
+            [Injection] public EmptyServiceContainer Empty3 { get; private set; }
+        }
+        
+        [Fact]
+        public void ResolveWithPropertyInjection()
+        {
+            var descriptors = new ServiceDescriptor[]
+            {
+                new ServiceDescriptor(typeof(EmptyService), typeof(EmptyService), ServiceLifetime.Transient),
+                new ServiceDescriptor(typeof(EmptyServiceContainer), typeof(EmptyServiceContainer), ServiceLifetime.Transient),
+                new ServiceDescriptor(typeof(PublicPropertyInjectedService), typeof(PublicPropertyInjectedService), ServiceLifetime.Transient),
+                new ServiceDescriptor(typeof(PrivateSetPropertyInjectedService), typeof(PrivateSetPropertyInjectedService), ServiceLifetime.Transient),
+                new ServiceDescriptor(typeof(PrivatePropertyInjectedService), typeof(PrivatePropertyInjectedService), ServiceLifetime.Transient),
+                new ServiceDescriptor(typeof(MultiplePropertyInjectedService), typeof(MultiplePropertyInjectedService), ServiceLifetime.Transient)
+            };
+            var provider = new ServiceProvider(descriptors, GetLoggerFactory());
+            var pubService = provider.GetService<PublicPropertyInjectedService>();
+            Assert.NotNull(pubService);
+            Assert.NotNull(pubService.Empty);
+            Assert.NotNull(pubService.Empty.Empty);
+            
+            var privService = provider.GetService<PrivateSetPropertyInjectedService>();
+            Assert.NotNull(privService);
+            Assert.NotNull(privService.Empty);
+            Assert.NotNull(privService.Empty.Empty);
+            
+            var privProp = provider.GetService<PrivatePropertyInjectedService>();
+            Assert.NotNull(privProp);
+            Assert.NotNull(privProp.Empty);
+            Assert.NotNull(privProp.Empty.Empty);
+            
+            var multiService = provider.GetService<MultiplePropertyInjectedService>();
+            Assert.NotNull(multiService);
+            Assert.NotNull(multiService.EmptyP);
+            Assert.NotNull(multiService.EmptyP.Empty);
+            Assert.NotNull(multiService.Empty2);
+            Assert.NotNull(multiService.Empty2.Empty);
+            Assert.NotNull(multiService.Empty3);
+            Assert.NotNull(multiService.Empty3.Empty);
+        }
     }
 }

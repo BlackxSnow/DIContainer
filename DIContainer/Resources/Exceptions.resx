@@ -45,4 +45,7 @@
     <data name="MultipleInjectionMethodsNotSupported" xml:space="preserve">
         <value>Injected type {0} contains multiple injection methods</value>
     </data>
+    <data name="InjectionPropertyNoSetter" xml:space="preserve">
+        <value>Injection property {0} within {1} has no accessible setter</value>
+    </data>
 </root>

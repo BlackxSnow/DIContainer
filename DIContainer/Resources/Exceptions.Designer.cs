@@ -98,5 +98,11 @@ namespace DIContainer {
                 return ResourceManager.GetString("MultipleInjectionMethodsNotSupported", resourceCulture);
             }
         }
+        
+        internal static string InjectionPropertyNoSetter {
+            get {
+                return ResourceManager.GetString("InjectionPropertyNoSetter", resourceCulture);
+            }
+        }
     }
 }
