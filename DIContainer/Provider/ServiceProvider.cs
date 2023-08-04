@@ -14,8 +14,8 @@ namespace DIContainer.Provider
     public class ServiceProvider : IServiceProvider
     {
         internal ServiceProviderScope RootScope { get; }
-        internal InjectorCallSiteFactory InjectorCallSiteFactory { get; }
-        internal CallSiteFactory CallSiteFactory { get; }
+        internal IInjectorCallSiteFactory InjectorCallSiteFactory { get; }
+        internal ICallSiteFactory CallSiteFactory { get; }
         internal NotableTypeFactory NotableTypeFactory { get; }
 
         private IServiceProviderEngine _Engine;
@@ -62,7 +62,7 @@ namespace DIContainer.Provider
 
             if (callSite.CacheInfo.Location == CacheLocation.Root)
             {
-                object? instance = CallSiteRuntimeResolver.Instance.Resolve(callSite, RootScope);
+                object? instance = _Engine.RuntimeResolver.Resolve(callSite, RootScope);
                 return new ServiceAccessor() { CallSite = callSite, Resolver = _ => instance };
             }
 
@@ -80,7 +80,6 @@ namespace DIContainer.Provider
             _Engine = new RuntimeServiceProviderEngine();
             
             _Logger = loggerFactory.CreateLogger<ServiceProvider>();
-            _Logger.LogInformation("Logger created");
         }
 
         public ServiceProvider(IEnumerable<ServiceDescriptor> services) : this(services,
@@ -88,6 +87,17 @@ namespace DIContainer.Provider
         {
             
         }
-        
+
+        internal ServiceProvider(ILoggerFactory loggerFactory, ICallSiteFactory callSiteFactory,
+            IInjectorCallSiteFactory injectorCallSiteFactory, IServiceProviderEngine engine)
+        {
+            _Logger = loggerFactory.CreateLogger<ServiceProvider>();
+            
+            RootScope = new ServiceProviderScope(this, true);
+            _ServiceAccessors = new Dictionary<ServiceIdentifier, ServiceAccessor>();
+            CallSiteFactory = callSiteFactory;
+            InjectorCallSiteFactory = injectorCallSiteFactory;
+            _Engine = engine;
+        }
     }
 }

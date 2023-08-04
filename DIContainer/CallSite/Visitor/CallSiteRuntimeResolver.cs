@@ -7,11 +7,9 @@ using DIContainer.Provider;
 
 namespace DIContainer.CallSite.Visitor
 {
-    internal class CallSiteRuntimeResolver : CallSiteVisitor<RuntimeResolverContext, object?>
+    internal class CallSiteRuntimeResolver : CallSiteVisitor<RuntimeResolverContext, object?>, ICallSiteRuntimeResolver
     {
-        public static CallSiteRuntimeResolver Instance { get; } = new();
-
-        public InjectorRuntimeResolver InjectorCallSiteVisitor => InjectorRuntimeResolver.Instance;
+        public IInjectorRuntimeResolver InjectorResolver { get; }
 
         public object? Resolve(ServiceCallSite callSite, ServiceProviderScope scope)
         {
@@ -29,7 +27,7 @@ namespace DIContainer.CallSite.Visitor
             }
 
             object? result = callSite.ConstructorInfo.Invoke(arguments);
-            InjectorRuntimeResolver.Instance.Inject(callSite.InjectorCallSite,
+            InjectorResolver.Inject(callSite.InjectorCallSite,
                 new InjectorRuntimeResolverContext(context.Scope, result));
             return result;
         }
@@ -59,6 +57,11 @@ namespace DIContainer.CallSite.Visitor
         protected override object? VisitFactory(FactoryCallSite callSite, RuntimeResolverContext context)
         {
             return callSite.Factory(context.Scope);
+        }
+
+        public CallSiteRuntimeResolver(Func<CallSiteRuntimeResolver, IInjectorRuntimeResolver> injectorResolverBuilder)
+        {
+            InjectorResolver = injectorResolverBuilder(this);
         }
     }
 }

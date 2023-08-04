@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 
 namespace DIContainer.CallSite
 {
-    public class CallSiteFactory
+    public class CallSiteFactory : ICallSiteFactory
     {
         private ServiceProvider _ServiceProvider;
         private Dictionary<ServiceIdentifier, List<ServiceDescriptor>> _Descriptors;

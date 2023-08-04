@@ -1,19 +1,26 @@
 using DIContainer.CallSite;
 using DIContainer.CallSite.Visitor;
 using DIContainer.Injector;
+using DIContainer.Injector.Visitor;
 
 namespace DIContainer.Provider.Engine
 {
-    public class RuntimeServiceProviderEngine : IServiceProviderEngine
+    internal class RuntimeServiceProviderEngine : IServiceProviderEngine
     {
+        public ICallSiteRuntimeResolver RuntimeResolver { get; }
         public ServiceResolver BuildResolver(ServiceCallSite callSite)
         {
-            return scope => CallSiteRuntimeResolver.Instance.Resolve(callSite, scope);
+            return scope => RuntimeResolver.Resolve(callSite, scope);
         }
 
         public ServiceInjector BuildInjector(InjectorCallSite callSite)
         {
             throw new System.NotImplementedException();
+        }
+
+        public RuntimeServiceProviderEngine()
+        {
+            RuntimeResolver = new CallSiteRuntimeResolver(res => new InjectorRuntimeResolver(res));
         }
     }
 }

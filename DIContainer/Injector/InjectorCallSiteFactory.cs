@@ -9,11 +9,11 @@ using Microsoft.Extensions.Logging;
 
 namespace DIContainer.Injector
 {
-    public class InjectorCallSiteFactory
+    internal class InjectorCallSiteFactory : IInjectorCallSiteFactory
     {
         private Dictionary<Type, InjectorCallSite> _CallSiteCache;
 
-        private CallSiteFactory _CallSiteFactory;
+        private ICallSiteFactory _CallSiteFactory;
         private ILogger<InjectorCallSiteFactory> _Logger;
 
         public InjectorCallSite GetCallSite(Type type)
@@ -23,7 +23,9 @@ namespace DIContainer.Injector
         
         private InjectorCallSite BuildCallSite(Type type)
         {
-            return new InjectorCallSite(type, GetMethodInjectionPoint(type), GetPropertyInjectionPoints(type));
+            var callSite = new InjectorCallSite(type, GetMethodInjectionPoint(type), GetPropertyInjectionPoints(type));
+            _CallSiteCache[type] = callSite;
+            return callSite;
         }
         
         private MethodInjectionPoint? GetMethodInjectionPoint(Type type)
@@ -77,7 +79,7 @@ namespace DIContainer.Injector
             return injectionPoints;
         }
 
-        public InjectorCallSiteFactory(ILogger<InjectorCallSiteFactory> logger, CallSiteFactory callSiteFactory)
+        public InjectorCallSiteFactory(ILogger<InjectorCallSiteFactory> logger, ICallSiteFactory callSiteFactory)
         {
             _Logger = logger;
             _CallSiteCache = new Dictionary<Type, InjectorCallSite>();

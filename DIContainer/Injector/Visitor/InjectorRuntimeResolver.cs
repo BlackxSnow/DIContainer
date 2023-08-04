@@ -4,10 +4,11 @@ using DIContainer.CallSite.Visitor;
 
 namespace DIContainer.Injector.Visitor
 {
-    internal class InjectorRuntimeResolver : InjectorCallSiteVisitor<InjectorRuntimeResolverContext>
+    internal class InjectorRuntimeResolver : InjectorCallSiteVisitor<InjectorRuntimeResolverContext>, IInjectorRuntimeResolver
     {
-        public static InjectorRuntimeResolver Instance { get; } = new();
 
+        public ICallSiteRuntimeResolver ServiceResolver { get; }
+        
         public void Inject(InjectorCallSite callSite, InjectorRuntimeResolverContext context)
         {
             VisitCallSite(callSite, context);
@@ -21,7 +22,7 @@ namespace DIContainer.Injector.Visitor
 
             for (var i = 0; i < parameterCallSites.Length; i++)
             {
-                parameterValues[i] = CallSiteRuntimeResolver.Instance.Resolve(parameterCallSites[i], context.Scope);
+                parameterValues[i] = ServiceResolver.Resolve(parameterCallSites[i], context.Scope);
             }
 
             callSite.MethodInjectionPoint.Method.Invoke(context.Instance, parameterValues);
@@ -30,8 +31,13 @@ namespace DIContainer.Injector.Visitor
         protected override void VisitSingleProperty(PropertyInjectionPoint property, InjectorRuntimeResolverContext context)
         {
             MethodInfo setter = property.Property.GetSetMethod(true);
-            object? value = CallSiteRuntimeResolver.Instance.Resolve(property.CallSite, context.Scope);
+            object? value = ServiceResolver.Resolve(property.CallSite, context.Scope);
             setter.Invoke(context.Instance, new []{value});
+        }
+
+        public InjectorRuntimeResolver(ICallSiteRuntimeResolver serviceResolver)
+        {
+            ServiceResolver = serviceResolver;
         }
     }
 }
