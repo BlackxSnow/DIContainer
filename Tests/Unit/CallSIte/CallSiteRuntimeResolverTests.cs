@@ -253,6 +253,58 @@ namespace Tests.Unit.CallSIte
             Assert.NotNull(service.IntDep);
             Assert.NotNull(service.StringDep);
         }
+
+
+        
+        [Fact]
+        public void PrimarySingletonResolution()
+        {
+            var provider = new ServiceProviderMock();
+            var resolver = new CallSiteRuntimeResolver(_ => new InjectorMock());
+
+            ConstructorCallSite callSite = BuildConstructorCallSite(typeof(EmptyService), 
+                Array.Empty<ServiceCallSite>(), ServiceLifetime.Singleton);
+
+            object firstResolved = resolver.Resolve(callSite, provider.RootScope);
+            object secondResolved = resolver.Resolve(callSite, provider.RootScope);
+            
+            Assert.NotNull(firstResolved);
+            Assert.NotNull(secondResolved);
+            Assert.Same(firstResolved, secondResolved);
+        }
+        
+        [Fact]
+        public void PrimaryScopedResolution()
+        {
+            var provider = new ServiceProviderMock();
+            var resolver = new CallSiteRuntimeResolver(_ => new InjectorMock());
+
+            var scope = new ServiceProviderScope(provider, false);
+            var secondScope = new ServiceProviderScope(provider, false);
+
+            ConstructorCallSite callSite = BuildConstructorCallSite(typeof(EmptyService), 
+                Array.Empty<ServiceCallSite>(), ServiceLifetime.Scoped);
+
+            object firstResolved = resolver.Resolve(callSite, scope);
+            object secondResolved = resolver.Resolve(callSite, scope);
+            object differentScopeResolved = resolver.Resolve(callSite, secondScope);
+            
+            Assert.NotNull(firstResolved);
+            Assert.NotNull(secondResolved);
+            Assert.NotNull(differentScopeResolved);
+            Assert.Same(firstResolved, secondResolved);
+            Assert.NotSame(firstResolved, differentScopeResolved);
+        }
+
+        private class DisposableService : IDisposable
+        {
+            public bool IsDisposed { get; private set; }
+            public void Dispose()
+            {
+                IsDisposed = true;
+            }
+        }
+        
         [Fact]
         public void SingletonDispose()
         {
