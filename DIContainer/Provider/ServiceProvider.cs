@@ -11,9 +11,11 @@ using Microsoft.Extensions.Logging;
 
 namespace DIContainer.Provider
 {
-    public class ServiceProvider : IServiceProvider
+    public class ServiceProvider : IRootServiceProvider
     {
-        internal ServiceProviderScope RootScope { get; }
+        public Action Disposed { get; set; }
+        public ServiceProviderScope RootScope { get; }
+
         internal IInjectorCallSiteFactory InjectorCallSiteFactory { get; }
         internal ICallSiteFactory CallSiteFactory { get; }
         internal NotableTypeFactory NotableTypeFactory { get; }
@@ -22,6 +24,8 @@ namespace DIContainer.Provider
         private Dictionary<ServiceIdentifier, ServiceAccessor> _ServiceAccessors;
 
         private ILogger<ServiceProvider> _Logger;
+
+        public bool IsDisposed { get; private set; }
 
         public TService? GetService<TService>()
         {
@@ -70,6 +74,20 @@ namespace DIContainer.Provider
             return new ServiceAccessor() { CallSite = callSite, Resolver = resolver };
         }
         
+        public IServiceProviderScope CreateScope()
+        {
+            if (IsDisposed) throw new ObjectDisposedException(nameof(ServiceProvider));
+
+            return new ServiceProviderScope(this, false);
+        }
+        
+        public void Dispose()
+        {
+            IsDisposed = true;
+            RootScope.Dispose();
+            Disposed?.Invoke();
+        }
+        
         public ServiceProvider(IEnumerable<ServiceDescriptor> services, ILoggerFactory loggerFactory)
         {
             RootScope = new ServiceProviderScope(this, true);
@@ -84,7 +102,7 @@ namespace DIContainer.Provider
             
             _Logger = loggerFactory.CreateLogger<ServiceProvider>();
         }
-
+        
         public ServiceProvider(IEnumerable<ServiceDescriptor> services) : this(services,
             LoggerFactory.Create(b => b.AddConsole()))
         {
@@ -102,5 +120,6 @@ namespace DIContainer.Provider
             InjectorCallSiteFactory = injectorCallSiteFactory;
             _Engine = engine;
         }
+
     }
 }

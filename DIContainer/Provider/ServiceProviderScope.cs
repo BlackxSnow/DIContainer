@@ -1,14 +1,16 @@
 using System;
 using System.Collections.Generic;
+using DIContainer.Service;
 
 namespace DIContainer.Provider
 {
-    public class ServiceProviderScope : IServiceProviderScope, IServiceProvider
+    public class ServiceProviderScope : IServiceProviderScope, IServiceProvider, IServiceProviderScopeFactory
     {
         public bool IsRootScope { get; }
-        internal readonly ServiceProvider RootProvider;
+        internal readonly IRootServiceProvider RootProvider;
         private List<object> _DisposableObjects;
-        private Dictionary<Type, object?> _ResolvedServices;
+        public bool IsDisposed { get; private set; }
+        internal Dictionary<ServiceCacheKey, object?> ResolvedServices;
         
         public TService? GetService<TService>()
         {
@@ -20,12 +22,45 @@ namespace DIContainer.Provider
             return RootProvider.GetService(type);
         }
 
-        public ServiceProviderScope(ServiceProvider rootProvider, bool isRootScope)
+        public void Dispose()
+        {
+            IsDisposed = true;
+            foreach (object obj in _DisposableObjects)
+            {
+                switch (obj)
+                {
+                    case IDisposable disposable:
+                        disposable.Dispose();
+                        break;
+                    case IAsyncDisposable disposable:
+                        disposable.DisposeAsync();
+                        break;
+                }
+            }
+        }
+
+        public object? CaptureIfDisposable(object? instance)
+        {
+            if (instance is null or (not IDisposable and not IAsyncDisposable)) return instance;
+            
+            _DisposableObjects.Add(instance!);
+            return instance;
+        }
+        
+        public IServiceProviderScope CreateScope()
+        {
+            if (IsDisposed) throw new ObjectDisposedException(nameof(ServiceProviderScope));
+
+            return RootProvider.CreateScope();
+        }
+        
+        internal ServiceProviderScope(IRootServiceProvider rootProvider, bool isRootScope)
         {
             RootProvider = rootProvider;
             _DisposableObjects = new List<object>();
-            _ResolvedServices = new Dictionary<Type, object?>();
+            ResolvedServices = new Dictionary<ServiceCacheKey, object?>();
             IsRootScope = isRootScope;
+            rootProvider.Disposed += Dispose;
         }
     }
 }

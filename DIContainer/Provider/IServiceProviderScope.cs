@@ -1,6 +1,8 @@
+using System;
+
 namespace DIContainer.Provider
 {
-    public interface IServiceProviderScope
+    public interface IServiceProviderScope : IDisposable
     {
         
     }
