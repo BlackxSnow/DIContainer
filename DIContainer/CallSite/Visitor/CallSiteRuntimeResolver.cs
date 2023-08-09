@@ -14,7 +14,7 @@ namespace DIContainer.CallSite.Visitor
         public object? Resolve(ServiceCallSite callSite, ServiceProviderScope scope)
         {
             if (scope.IsRootScope && callSite.Value != null) return callSite.Value;
-            return VisitCallSite(callSite, new RuntimeResolverContext { Scope = scope });
+            return VisitCallSiteCache(callSite, new RuntimeResolverContext { Scope = scope });
         }
         
         protected override object? VisitConstructor(ConstructorCallSite callSite, RuntimeResolverContext context)
@@ -57,6 +57,11 @@ namespace DIContainer.CallSite.Visitor
         protected override object? VisitFactory(FactoryCallSite callSite, RuntimeResolverContext context)
         {
             return callSite.Factory(context.Scope);
+        }
+
+        protected override object? VisitDisposeCache(ServiceCallSite callSite, RuntimeResolverContext context)
+        {
+            return context.Scope.CaptureIfDisposable(VisitCallSite(callSite, context));
         }
 
         public CallSiteRuntimeResolver(Func<CallSiteRuntimeResolver, IInjectorRuntimeResolver> injectorResolverBuilder)
