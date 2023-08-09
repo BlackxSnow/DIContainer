@@ -14,6 +14,7 @@ namespace Tests
     public class Tests
     {
         private readonly ITestOutputHelper _TestOutputHelper;
+        
 
         public Tests(ITestOutputHelper testOutputHelper)
         {
@@ -40,20 +41,13 @@ namespace Tests
             }
         }
 
-        private ILoggerFactory GetLoggerFactory()
-        {
-            return LoggerFactory.Create(builder =>
-            {
-                builder.AddXUnit(_TestOutputHelper);
-                builder.AddFilter("*", LogLevel.Trace);
-            });
-        }
+
         
         [Fact]
         public void CreateEmptyProvider()
         {
             ServiceDescriptor[] descriptors = Array.Empty<ServiceDescriptor>();
-            ServiceProvider provider = new ServiceProvider(descriptors, GetLoggerFactory());
+            ServiceProvider provider = new ServiceProvider(descriptors, Utility.GetLoggerFactory(_TestOutputHelper));
             Assert.NotNull(provider);
         }
         
@@ -66,7 +60,7 @@ namespace Tests
                 new ServiceDescriptor(typeof(EmptyServiceContainer),
                     typeof(EmptyServiceContainer), ServiceLifetime.Transient)
             };
-            ServiceProvider provider = new ServiceProvider(descriptors, GetLoggerFactory());
+            ServiceProvider provider = new ServiceProvider(descriptors, Utility.GetLoggerFactory(_TestOutputHelper));
             Assert.NotNull(provider);
         }
         
@@ -77,7 +71,7 @@ namespace Tests
             {
                 new ServiceDescriptor(typeof(EmptyService), typeof(EmptyService), ServiceLifetime.Transient),
             };
-            var provider = new ServiceProvider(descriptors, GetLoggerFactory());
+            var provider = new ServiceProvider(descriptors, Utility.GetLoggerFactory(_TestOutputHelper));
             var resolvedService = provider.GetService(typeof(EmptyService));
             Assert.NotNull(resolvedService);
         }
@@ -90,7 +84,7 @@ namespace Tests
                 new ServiceDescriptor(typeof(EmptyServiceContainer),
                     typeof(EmptyServiceContainer), ServiceLifetime.Transient)
             };
-            var provider = new ServiceProvider(descriptors, GetLoggerFactory());
+            var provider = new ServiceProvider(descriptors, Utility.GetLoggerFactory(_TestOutputHelper));
             Assert.Throws<InvalidOperationException>(() =>
                 provider.GetService(typeof(EmptyServiceContainer)));
         }
@@ -104,7 +98,7 @@ namespace Tests
                 new ServiceDescriptor(typeof(EmptyServiceContainer),
                     typeof(EmptyServiceContainer), ServiceLifetime.Transient)
             };
-            var provider = new ServiceProvider(descriptors, GetLoggerFactory());
+            var provider = new ServiceProvider(descriptors, Utility.GetLoggerFactory(_TestOutputHelper));
             var resolvedService = (EmptyServiceContainer)provider.GetService(typeof(EmptyServiceContainer));
             Assert.NotNull(resolvedService);
             Assert.NotNull(resolvedService.Empty);
@@ -119,7 +113,7 @@ namespace Tests
                 new ServiceDescriptor(typeof(IEmptyServiceContainer),
                     typeof(EmptyServiceContainer), ServiceLifetime.Transient)
             };
-            var provider = new ServiceProvider(descriptors, GetLoggerFactory());
+            var provider = new ServiceProvider(descriptors, Utility.GetLoggerFactory(_TestOutputHelper));
             var resolvedService = provider.GetService<IEmptyServiceContainer>();
             Assert.NotNull(resolvedService);
             Assert.NotNull(resolvedService.Empty);
@@ -133,7 +127,7 @@ namespace Tests
                 new ServiceDescriptor(typeof(ILoggerFactory), typeof(LoggerFactory), ServiceLifetime.Singleton),
                 new ServiceDescriptor(typeof(ILogger<>), typeof(Logger<>), ServiceLifetime.Singleton)
             };
-            var provider = new ServiceProvider(descriptors, GetLoggerFactory());
+            var provider = new ServiceProvider(descriptors, Utility.GetLoggerFactory(_TestOutputHelper));
             var logger = provider.GetService<ILogger<Tests>>();
             Assert.NotNull(logger);
         }
@@ -149,7 +143,7 @@ namespace Tests
                 new ServiceDescriptor(typeof(IEmptyServiceContainer), 
                     typeof(EmptyServiceContainer), ServiceLifetime.Transient)
             };
-            var provider = new ServiceProvider(descriptors, GetLoggerFactory());
+            var provider = new ServiceProvider(descriptors, Utility.GetLoggerFactory(_TestOutputHelper));
             var resolvedServices = provider.GetService<IEnumerable<IEmptyServiceContainer>>();
             Assert.NotNull(resolvedServices);
             Assert.Equal(2, resolvedServices.Count());
@@ -175,7 +169,7 @@ namespace Tests
                 new ServiceDescriptor(typeof(EmptyServiceContainer), typeof(EmptyServiceContainer), ServiceLifetime.Transient),
                 new ServiceDescriptor(typeof(MethodInjectedService), typeof(MethodInjectedService), ServiceLifetime.Transient)
             };
-            var provider = new ServiceProvider(descriptors, GetLoggerFactory());
+            var provider = new ServiceProvider(descriptors, Utility.GetLoggerFactory(_TestOutputHelper));
             var resolvedService = provider.GetService<MethodInjectedService>();
             Assert.NotNull(resolvedService);
             Assert.NotNull(resolvedService.Empty);
@@ -218,7 +212,7 @@ namespace Tests
                 new ServiceDescriptor(typeof(PrivatePropertyInjectedService), typeof(PrivatePropertyInjectedService), ServiceLifetime.Transient),
                 new ServiceDescriptor(typeof(MultiplePropertyInjectedService), typeof(MultiplePropertyInjectedService), ServiceLifetime.Transient)
             };
-            var provider = new ServiceProvider(descriptors, GetLoggerFactory());
+            var provider = new ServiceProvider(descriptors, Utility.GetLoggerFactory(_TestOutputHelper));
             var pubService = provider.GetService<PublicPropertyInjectedService>();
             Assert.NotNull(pubService);
             Assert.NotNull(pubService.Empty);
