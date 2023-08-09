@@ -16,6 +16,8 @@ namespace DIContainer.Injector
         private ICallSiteFactory _CallSiteFactory;
         private ILogger<InjectorCallSiteFactory> _Logger;
 
+        private const BindingFlags _AllInstance = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+
         public InjectorCallSite GetCallSite(Type type)
         {
             return _CallSiteCache.TryGetValue(type, out InjectorCallSite callSite) ? callSite : BuildCallSite(type);
@@ -31,7 +33,8 @@ namespace DIContainer.Injector
         private MethodInjectionPoint? GetMethodInjectionPoint(Type type)
         {
             MethodInfo[] injectionMethods =
-                type.GetMethods().Where(m => m.GetCustomAttribute(typeof(InjectionAttribute)) != null).ToArray();
+                type.GetMethods(_AllInstance).Where(m => m.GetCustomAttribute(typeof(InjectionAttribute)) != null)
+                    .ToArray();
             if (injectionMethods.Length == 0) return null;
             if (injectionMethods.Length > 1)
             {
@@ -56,7 +59,7 @@ namespace DIContainer.Injector
         private PropertyInjectionPoint[]? GetPropertyInjectionPoints(Type type)
         {
             PropertyInfo[] injectionProperties =
-                type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                type.GetProperties(_AllInstance)
                     .Where(p => p.GetCustomAttribute<InjectionAttribute>() != null).ToArray();
 
             if (injectionProperties.Length == 0) return null;
