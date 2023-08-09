@@ -59,6 +59,33 @@ namespace DIContainer.CallSite.Visitor
             return callSite.Factory(context.Scope);
         }
 
+        protected override object? VisitRootCache(ServiceCallSite callSite, RuntimeResolverContext context)
+        {
+            if (callSite.Value is not null) return callSite.Value;
+
+            ServiceProviderScope rootScope = context.Scope.RootProvider.RootScope;
+
+            object? resolved = VisitCallSite(callSite, new RuntimeResolverContext() { Scope = rootScope });
+            rootScope.CaptureIfDisposable(resolved);
+            callSite.Value = resolved;
+            return resolved;
+        }
+
+        protected override object? VisitScopeCache(ServiceCallSite callSite, RuntimeResolverContext context)
+        {
+            if (context.Scope.IsRootScope) return VisitRootCache(callSite, context);
+
+            if (context.Scope.ResolvedServices.TryGetValue(callSite.CacheInfo.CacheKey, out object? resolved))
+            {
+                return resolved;
+            }
+
+            resolved = VisitCallSite(callSite, context);
+            context.Scope.CaptureIfDisposable(resolved);
+            context.Scope.ResolvedServices.Add(callSite.CacheInfo.CacheKey, resolved);
+            return resolved;
+        }
+
         protected override object? VisitDisposeCache(ServiceCallSite callSite, RuntimeResolverContext context)
         {
             return context.Scope.CaptureIfDisposable(VisitCallSite(callSite, context));
