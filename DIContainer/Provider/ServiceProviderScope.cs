@@ -6,18 +6,18 @@ namespace DIContainer.Provider
     public class ServiceProviderScope : IServiceProviderScope, IServiceProvider
     {
         public bool IsRootScope { get; }
-        internal ServiceProvider RootProvider;
+        internal readonly ServiceProvider RootProvider;
         private List<object> _DisposableObjects;
         private Dictionary<Type, object?> _ResolvedServices;
         
-        public TService GetService<TService>()
+        public TService? GetService<TService>()
         {
-            throw new NotImplementedException();
+            return RootProvider.GetService<TService>();
         }
 
-        public object GetService(Type type)
+        public object? GetService(Type type)
         {
-            throw new NotImplementedException();
+            return RootProvider.GetService(type);
         }
 
         public ServiceProviderScope(ServiceProvider rootProvider, bool isRootScope)
