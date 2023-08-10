@@ -25,6 +25,8 @@ namespace DIContainer.CallSite.Visitor
 
         private ILogger<CallSiteILResolver> _Logger;
         private readonly Dictionary<ServiceCacheKey, ResolverMethod> _ScopeResolverCache;
+        private ServiceProviderScope _RootScope;
+        private ICallSiteRuntimeResolver _RuntimeResolver;
 
         private static readonly FieldInfo _ConstantsField =
             typeof(RuntimeContext).GetField(nameof(RuntimeContext.Constants));
@@ -88,7 +90,13 @@ namespace DIContainer.CallSite.Visitor
         {
             throw new NotImplementedException();
         }
-        
+
+        protected override object? VisitRootCache(ServiceCallSite callSite, ILResolverContext context)
+        {
+            AddConstant(context, _RuntimeResolver.Resolve(callSite, _RootScope));
+            return null;
+        }
+
         protected override object? VisitConstructor(ConstructorCallSite callSite, ILResolverContext context)
         {
             foreach (ServiceCallSite parameterCallSite in callSite.ParameterCallSites)
@@ -116,7 +124,8 @@ namespace DIContainer.CallSite.Visitor
 
         protected override object? VisitServiceProvider(ServiceProviderCallSite callSite, ILResolverContext context)
         {
-            throw new NotImplementedException();
+            context.Generator.Emit(OpCodes.Ldarg_1);
+            return null;
         }
 
         protected override object? VisitEnumerable(EnumerableCallSite callSite, ILResolverContext context)
@@ -165,10 +174,13 @@ namespace DIContainer.CallSite.Visitor
             context.Constants.Add(constant);
         }
 
-        public CallSiteILResolver(ILogger<CallSiteILResolver> logger)
+        public CallSiteILResolver(ILogger<CallSiteILResolver> logger, ServiceProviderScope rootScope, 
+            ICallSiteRuntimeResolver runtimeResolver)
         {
             _ScopeResolverCache = new Dictionary<ServiceCacheKey, ResolverMethod>();
             _Logger = logger;
+            _RuntimeResolver = runtimeResolver;
+            _RootScope = rootScope;
         }
     }
 }
