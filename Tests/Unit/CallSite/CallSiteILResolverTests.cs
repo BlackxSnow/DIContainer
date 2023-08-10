@@ -269,6 +269,22 @@ namespace Tests.Unit.CallSite
         }
 
         [Fact]
+        public void ResolverCaching()
+        {
+            var resolverBuilder = BuildILResolver(new ServiceProviderMock());
+        
+            ConstructorCallSite callSite = BuildConstructorCallSite(typeof(EmptyService), 
+                Array.Empty<ServiceCallSite>(), ServiceLifetime.Scoped);
+            
+            ServiceResolver firstResolver = resolverBuilder.Build(callSite);
+            ServiceResolver secondResolver = resolverBuilder.Build(callSite);
+            
+            Assert.NotNull(firstResolver);
+            Assert.NotNull(secondResolver);
+            Assert.Same(firstResolver, secondResolver);
+        }
+        
+        [Fact]
         public void PrimarySingletonResolution()
         {
             var provider = new ServiceProviderMock();
