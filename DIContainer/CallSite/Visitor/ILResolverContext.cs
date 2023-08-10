@@ -3,10 +3,15 @@ using System.Reflection.Emit;
 
 namespace DIContainer.CallSite.Visitor
 {
-    internal struct ILResolverContext
+    internal class ILResolverContext
     {
         public ILGenerator Generator { get; }
-        public List<object?>? Constants { get; set; }
-        public List<ServiceFactory>? Factories { get; set; }
+        public List<object?>? Constants;
+        public List<ServiceFactory>? Factories;
+
+        public ILResolverContext(ILGenerator generator)
+        {
+            Generator = generator;
+        }
     }
 }

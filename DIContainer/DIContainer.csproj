@@ -121,8 +121,9 @@
         <Compile Include="CallSite\ServiceProviderCallSite.cs" />
         <Compile Include="CallSite\Visitor\CallSiteRuntimeResolver.cs" />
         <Compile Include="CallSite\Visitor\CallSiteVisitor.cs" />
+        <Compile Include="CallSite\Visitor\ICallSiteILResolver.cs" />
         <Compile Include="CallSite\Visitor\ICallSiteRuntimeResolver.cs" />
-        <Compile Include="CallSite\Visitor\ILResolverBuilder.cs" />
+        <Compile Include="CallSite\Visitor\CallSiteILResolver.cs" />
         <Compile Include="CallSite\Visitor\ILResolverContext.cs" />
         <Compile Include="CallSite\Visitor\RuntimeResolverContext.cs" />
         <Compile Include="Delegates.cs" />

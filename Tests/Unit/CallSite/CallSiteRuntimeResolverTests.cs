@@ -13,7 +13,7 @@ using Xunit;
 using Xunit.Abstractions;
 using IServiceProvider = DIContainer.Provider.IServiceProvider;
 
-namespace Tests.Unit.CallSIte
+namespace Tests.Unit.CallSite
 {
     public class CallSiteRuntimeResolverTests
     {
