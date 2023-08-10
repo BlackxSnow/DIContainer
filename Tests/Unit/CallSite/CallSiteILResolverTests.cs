@@ -287,29 +287,32 @@ namespace Tests.Unit.CallSite
             Assert.NotNull(secondResolved);
             Assert.Same(firstResolved, secondResolved);
         }
-        //
-        // [Fact]
-        // public void PrimaryScopedResolution()
-        // {
-        //     var provider = new ServiceProviderMock();
-        //     var resolver = new CallSiteRuntimeResolver(_ => new InjectorMock());
-        //
-        //     var scope = new ServiceProviderScope(provider, false);
-        //     var secondScope = new ServiceProviderScope(provider, false);
-        //
-        //     ConstructorCallSite callSite = BuildConstructorCallSite(typeof(EmptyService), 
-        //         Array.Empty<ServiceCallSite>(), ServiceLifetime.Scoped);
-        //
-        //     object firstResolved = resolver.Resolve(callSite, scope);
-        //     object secondResolved = resolver.Resolve(callSite, scope);
-        //     object differentScopeResolved = resolver.Resolve(callSite, secondScope);
-        //     
-        //     Assert.NotNull(firstResolved);
-        //     Assert.NotNull(secondResolved);
-        //     Assert.NotNull(differentScopeResolved);
-        //     Assert.Same(firstResolved, secondResolved);
-        //     Assert.NotSame(firstResolved, differentScopeResolved);
-        // }
+        
+        [Fact]
+        public void PrimaryScopedResolution()
+        {
+            var provider = new ServiceProviderMock();
+            var resolverBuilder = BuildILResolver(provider);
+        
+            ConstructorCallSite callSite = BuildConstructorCallSite(typeof(EmptyService), 
+                Array.Empty<ServiceCallSite>(), ServiceLifetime.Scoped);
+            
+            ServiceResolver resolver = resolverBuilder.Build(callSite);
+
+            var scope = (ServiceProviderScope)provider.CreateScope();
+            var differentScope = (ServiceProviderScope)provider.CreateScope();
+
+            object firstObject = resolver(scope);
+            object secondObject = resolver(scope);
+            object differentObject = resolver(differentScope);
+            
+            Assert.NotNull(firstObject);
+            Assert.NotNull(secondObject);
+            Assert.NotNull(differentObject);
+            Assert.Same(firstObject, secondObject);
+            Assert.NotSame(firstObject, differentObject);
+        }
+
         //
         // private class DisposableService : IDisposable
         // {
