@@ -86,6 +86,12 @@ namespace Tests.Unit.CallSite
                 StringDep = sService;
             }
         }
+
+        private CallSiteILResolver BuildILResolver(IRootServiceProvider provider)
+        {
+            return new CallSiteILResolver(_LoggerFactory.CreateLogger<CallSiteILResolver>(), provider.RootScope,
+                new CallSiteRuntimeResolver(_ => new InjectorMock()));
+        }
         
         private ConstructorCallSite BuildConstructorCallSite(Type serviceType, ServiceCallSite[] paramCallSites = null, 
             ServiceLifetime lifetime = ServiceLifetime.Transient)
@@ -100,7 +106,7 @@ namespace Tests.Unit.CallSite
         public void ConstantResolution()
         {
             var provider = new ServiceProviderMock();
-            var resolverBuilder = new CallSiteILResolver(_LoggerFactory.CreateLogger<CallSiteILResolver>());
+            var resolverBuilder = BuildILResolver(provider);
             var callSite = new ConstantCallSite(typeof(Service), new Service(new IntService(), new StringService()));
             ServiceResolver resolver = resolverBuilder.Build(callSite);
             object serviceObject = resolver(provider.RootScope);
@@ -115,7 +121,7 @@ namespace Tests.Unit.CallSite
         public void PrimaryConstructorResolution()
         {
             var provider = new ServiceProviderMock();
-            var resolverBuilder = new CallSiteILResolver(_LoggerFactory.CreateLogger<CallSiteILResolver>());
+            var resolverBuilder = BuildILResolver(provider);
         
             var intCallSite = new ConstantCallSite(typeof(IntService), new IntService());
             var stringCallSite = new ConstantCallSite(typeof(StringService), new StringService());
@@ -136,7 +142,7 @@ namespace Tests.Unit.CallSite
         public void SecondaryConstructorResolution()
         {
             var provider = new ServiceProviderMock();
-            var resolverBuilder = new CallSiteILResolver(_LoggerFactory.CreateLogger<CallSiteILResolver>());
+            var resolverBuilder = BuildILResolver(provider);
         
             var intCallSite = BuildConstructorCallSite(typeof(IntService));
             var stringCallSite = BuildConstructorCallSite(typeof(StringService));
@@ -157,7 +163,7 @@ namespace Tests.Unit.CallSite
         public void PrimaryEnumerableResolution()
         {
             var provider = new ServiceProviderMock();
-            var resolverBuilder = new CallSiteILResolver(_LoggerFactory.CreateLogger<CallSiteILResolver>());
+            var resolverBuilder = BuildILResolver(provider);
         
             var intCallSite = new ConstantCallSite(typeof(IntService), new IntService());
             var stringCallSite = new ConstantCallSite(typeof(StringService), new StringService());
@@ -196,7 +202,7 @@ namespace Tests.Unit.CallSite
         public void SecondaryEnumerableResolution()
         {
             var provider = new ServiceProviderMock();
-            var resolverBuilder = new CallSiteILResolver(_LoggerFactory.CreateLogger<CallSiteILResolver>());
+            var resolverBuilder = BuildILResolver(provider);
         
             ConstructorCallSite intCallSite = BuildConstructorCallSite(typeof(IntService));
             var enumerableIntCacheInfo = new ServiceCacheInfo(ServiceLifetime.Transient,
@@ -227,7 +233,7 @@ namespace Tests.Unit.CallSite
         public void PrimaryFactoryResolution()
         {
             var provider = new ServiceProviderMock();
-            var resolverBuilder = new CallSiteILResolver(_LoggerFactory.CreateLogger<CallSiteILResolver>());
+            var resolverBuilder = BuildILResolver(provider);
             
             FactoryCallSite serviceCallSite = BuildFactoryCallSite(typeof(Service),
                 p => new Service(new IntService(), new StringService()));
@@ -245,7 +251,7 @@ namespace Tests.Unit.CallSite
         public void SecondaryFactoryResolution()
         {
             var provider = new ServiceProviderMock();
-            var resolverBuilder = new CallSiteILResolver(_LoggerFactory.CreateLogger<CallSiteILResolver>());
+            var resolverBuilder = BuildILResolver(provider);
         
             FactoryCallSite intCallSite = BuildFactoryCallSite(typeof(IntService), p => new IntService());
             FactoryCallSite stringCallSite = BuildFactoryCallSite(typeof(StringService), p => new StringService());
@@ -261,23 +267,26 @@ namespace Tests.Unit.CallSite
             Assert.NotNull(service.StringDep);
             Assert.NotNull(service.IntDep);
         }
-        //
-        // [Fact]
-        // public void PrimarySingletonResolution()
-        // {
-        //     var provider = new ServiceProviderMock();
-        //     var resolver = new CallSiteRuntimeResolver(_ => new InjectorMock());
-        //
-        //     ConstructorCallSite callSite = BuildConstructorCallSite(typeof(EmptyService), 
-        //         Array.Empty<ServiceCallSite>(), ServiceLifetime.Singleton);
-        //
-        //     object firstResolved = resolver.Resolve(callSite, provider.RootScope);
-        //     object secondResolved = resolver.Resolve(callSite, provider.RootScope);
-        //     
-        //     Assert.NotNull(firstResolved);
-        //     Assert.NotNull(secondResolved);
-        //     Assert.Same(firstResolved, secondResolved);
-        // }
+
+        [Fact]
+        public void PrimarySingletonResolution()
+        {
+            var provider = new ServiceProviderMock();
+            var resolverBuilder = BuildILResolver(provider);
+        
+            ConstructorCallSite callSite = BuildConstructorCallSite(typeof(EmptyService), 
+                Array.Empty<ServiceCallSite>(), ServiceLifetime.Singleton);
+            
+            ServiceResolver firstResolver = resolverBuilder.Build(callSite);
+            ServiceResolver secondResolver = resolverBuilder.Build(callSite);
+            
+            object firstResolved = firstResolver(provider.RootScope);
+            object secondResolved = secondResolver(provider.RootScope);
+            
+            Assert.NotNull(firstResolved);
+            Assert.NotNull(secondResolved);
+            Assert.Same(firstResolved, secondResolved);
+        }
         //
         // [Fact]
         // public void PrimaryScopedResolution()
