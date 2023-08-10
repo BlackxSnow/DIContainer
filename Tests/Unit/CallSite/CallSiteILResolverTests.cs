@@ -37,9 +37,9 @@ namespace Tests.Unit.CallSite
 
         public class ServiceProviderMock : IRootServiceProvider
         {
-            public TService GetService<TService>() => throw new NotImplementedException();
+            public TService GetService<TService>() => throw new NotSupportedException();
 
-            public object GetService(Type type) => throw new NotImplementedException();
+            public object GetService(Type type) => throw new NotSupportedException();
 
             public Action Disposed { get; set; }
             public ServiceProviderScope RootScope { get; }
@@ -152,70 +152,70 @@ namespace Tests.Unit.CallSite
             Assert.NotNull(service.StringDep);
             Assert.NotNull(service.IntDep);
         }
-        //
-        // [Fact]
-        // public void PrimaryEnumerableResolution()
-        // {
-        //     var provider = new ServiceProviderMock();
-        //     var resolver = new CallSiteRuntimeResolver(_ => new InjectorMock());
-        //
-        //     var intCallSite = new ConstantCallSite(typeof(IntService), new IntService());
-        //     var stringCallSite = new ConstantCallSite(typeof(StringService), new StringService());
-        //
-        //     ConstructorCallSite singleServiceCallSite =
-        //         BuildConstructorCallSite(typeof(Service), new ServiceCallSite[] { intCallSite, stringCallSite });
-        //
-        //     var enumerableCacheInfo = new ServiceCacheInfo(ServiceLifetime.Transient,
-        //         new ServiceIdentifier(typeof(IEnumerable<Service>)));
-        //     
-        //     var enumerableCallSite = new EnumerableCallSite(enumerableCacheInfo, typeof(Service),
-        //         new ServiceCallSite[] { singleServiceCallSite, singleServiceCallSite });
-        //
-        //     object serviceObjects = resolver.Resolve(enumerableCallSite, provider.RootScope);
-        //     
-        //     Assert.IsAssignableFrom<IEnumerable<Service>>(serviceObjects);
-        //     Service[] services = ((IEnumerable<Service>)serviceObjects).ToArray();
-        //     Assert.Equal(2, services.Length);
-        //     Assert.All(services, Assert.NotNull);
-        //     Assert.All(services, s => Assert.NotNull(s.IntDep));
-        //     Assert.All(services, s => Assert.NotNull(s.StringDep));
-        //     Assert.Distinct(services);
-        // }
-        //
-        // private class EnumerableService
-        // {
-        //     public IEnumerable<IntService> IntServices;
-        //
-        //     public EnumerableService(IEnumerable<IntService> intServices)
-        //     {
-        //         IntServices = intServices;
-        //     }
-        // }
-        //
-        // [Fact]
-        // public void SecondaryEnumerableResolution()
-        // {
-        //     var provider = new ServiceProviderMock();
-        //     var resolver = new CallSiteRuntimeResolver(_ => new InjectorMock());
-        //
-        //     ConstructorCallSite intCallSite = BuildConstructorCallSite(typeof(IntService));
-        //     var enumerableIntCacheInfo = new ServiceCacheInfo(ServiceLifetime.Transient,
-        //         new ServiceIdentifier(typeof(IEnumerable<IntService>)));
-        //     var intEnumerableCallSite = new EnumerableCallSite(enumerableIntCacheInfo, typeof(IntService),
-        //         new ServiceCallSite[] { intCallSite, intCallSite });
-        //     
-        //     ConstructorCallSite singleServiceCallSite =
-        //         BuildConstructorCallSite(typeof(EnumerableService), new ServiceCallSite[] { intEnumerableCallSite });
-        //
-        //     object serviceObject = resolver.Resolve(singleServiceCallSite, provider.RootScope);
-        //     
-        //     Assert.IsType<EnumerableService>(serviceObject);
-        //     var service = (EnumerableService)serviceObject;
-        //     Assert.NotNull(service.IntServices);
-        //     Assert.Equal(2, service.IntServices.Count());
-        //     Assert.All(service.IntServices, Assert.NotNull);
-        //     Assert.Distinct(service.IntServices);
-        // }
+        
+        [Fact]
+        public void PrimaryEnumerableResolution()
+        {
+            var provider = new ServiceProviderMock();
+            var resolverBuilder = new CallSiteILResolver(_LoggerFactory.CreateLogger<CallSiteILResolver>());
+        
+            var intCallSite = new ConstantCallSite(typeof(IntService), new IntService());
+            var stringCallSite = new ConstantCallSite(typeof(StringService), new StringService());
+        
+            ConstructorCallSite singleServiceCallSite =
+                BuildConstructorCallSite(typeof(Service), new ServiceCallSite[] { intCallSite, stringCallSite });
+        
+            var enumerableCacheInfo = new ServiceCacheInfo(ServiceLifetime.Transient,
+                new ServiceIdentifier(typeof(IEnumerable<Service>)));
+            
+            var enumerableCallSite = new EnumerableCallSite(enumerableCacheInfo, typeof(Service),
+                new ServiceCallSite[] { singleServiceCallSite, singleServiceCallSite });
+        
+            ServiceResolver resolver = resolverBuilder.Build(enumerableCallSite);
+            object serviceObjects = resolver(provider.RootScope);
+            
+            Service[] services = Assert.IsAssignableFrom<IEnumerable<Service>>(serviceObjects).ToArray();
+            Assert.Equal(2, services.Length);
+            Assert.All(services, Assert.NotNull);
+            Assert.All(services, s => Assert.NotNull(s.IntDep));
+            Assert.All(services, s => Assert.NotNull(s.StringDep));
+            Assert.Distinct(services);
+        }
+        
+        private class EnumerableService
+        {
+            public IEnumerable<IntService> IntServices;
+        
+            public EnumerableService(IEnumerable<IntService> intServices)
+            {
+                IntServices = intServices;
+            }
+        }
+        
+        [Fact]
+        public void SecondaryEnumerableResolution()
+        {
+            var provider = new ServiceProviderMock();
+            var resolverBuilder = new CallSiteILResolver(_LoggerFactory.CreateLogger<CallSiteILResolver>());
+        
+            ConstructorCallSite intCallSite = BuildConstructorCallSite(typeof(IntService));
+            var enumerableIntCacheInfo = new ServiceCacheInfo(ServiceLifetime.Transient,
+                new ServiceIdentifier(typeof(IEnumerable<IntService>)));
+            var intEnumerableCallSite = new EnumerableCallSite(enumerableIntCacheInfo, typeof(IntService),
+                new ServiceCallSite[] { intCallSite, intCallSite });
+            
+            ConstructorCallSite singleServiceCallSite =
+                BuildConstructorCallSite(typeof(EnumerableService), new ServiceCallSite[] { intEnumerableCallSite });
+
+            ServiceResolver resolver = resolverBuilder.Build(singleServiceCallSite);
+            object serviceObject = resolver(provider.RootScope);
+            
+            var service = Assert.IsType<EnumerableService>(serviceObject);
+            Assert.NotNull(service.IntServices);
+            Assert.Equal(2, service.IntServices.Count());
+            Assert.All(service.IntServices, Assert.NotNull);
+            Assert.Distinct(service.IntServices);
+        }
         //
         // private FactoryCallSite BuildFactoryCallSite(Type serviceType, ServiceFactory factory)
         // {
