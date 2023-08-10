@@ -35,6 +35,21 @@ namespace DIContainer.CallSite.Visitor
 
         private static readonly MethodInfo _ServiceFactoryInvoke =
             typeof(ServiceFactory).GetMethod(nameof(ServiceFactory.Invoke)) ?? throw new InvalidOperationException();
+
+        private static readonly FieldInfo _ScopeResolvedServices =
+            typeof(ServiceProviderScope).GetField(nameof(ServiceProviderScope.ResolvedServices),
+                BindingFlags.Instance | BindingFlags.NonPublic) ?? throw new InvalidOperationException();
+
+        private static readonly MethodInfo _ScopeCaptureDisposable =
+            typeof(ServiceProviderScope).GetMethod(nameof(ServiceProviderScope.CaptureIfDisposable)) ??
+            throw new InvalidOperationException();
+
+        private static readonly MethodInfo _ServiceCacheTryGet =
+            typeof(Dictionary<ServiceCacheKey, object>).GetMethod(
+                nameof(Dictionary<ServiceCacheKey, object>.TryGetValue)) ?? throw new InvalidOperationException();
+        private static readonly MethodInfo _ServiceCacheAdd =
+            typeof(Dictionary<ServiceCacheKey, object>).GetMethod(
+                nameof(Dictionary<ServiceCacheKey, object>.Add)) ?? throw new InvalidOperationException();
         
         
         public ServiceResolver Build(ServiceCallSite callSite)
@@ -88,7 +103,49 @@ namespace DIContainer.CallSite.Visitor
 
         private void BuildScopedResolver(ServiceCallSite callSite, ILResolverContext context)
         {
-            throw new NotImplementedException();
+            LocalBuilder scopeServices = context.Generator.DeclareLocal(typeof(Dictionary<ServiceCacheKey, object?>));
+            LocalBuilder cacheKey = context.Generator.DeclareLocal(typeof(ServiceCacheKey));
+            LocalBuilder service = context.Generator.DeclareLocal(typeof(object));
+            
+            Label returnLabel = context.Generator.DefineLabel();
+            
+            // scopeServices = Scope.ResolvedServices
+            context.Generator.Emit(OpCodes.Ldarg_1);
+            context.Generator.Emit(OpCodes.Ldfld, _ScopeResolvedServices);
+            context.Generator.Emit(OpCodes.Stloc, scopeServices);
+            
+            AddConstant(context, callSite.CacheInfo.CacheKey);
+            context.Generator.Emit(OpCodes.Unbox_Any, typeof(ServiceCacheKey));
+            context.Generator.Emit(OpCodes.Stloc, cacheKey);
+            
+            // if(!scopeServices.TryGetValue(cacheKey, out service))
+            context.Generator.Emit(OpCodes.Ldloc, scopeServices);
+            context.Generator.Emit(OpCodes.Ldloc, cacheKey);
+            context.Generator.Emit(OpCodes.Ldloca, service);
+            context.Generator.Emit(OpCodes.Callvirt, _ServiceCacheTryGet);
+            context.Generator.Emit(OpCodes.Brtrue, returnLabel);
+            // {
+            VisitCallSite(callSite, context);
+            context.Generator.Emit(OpCodes.Stloc, service);
+            
+            // scopeServices.Add(cacheKey, service)
+            context.Generator.Emit(OpCodes.Ldloc, scopeServices);
+            context.Generator.Emit(OpCodes.Ldloc, cacheKey);
+            context.Generator.Emit(OpCodes.Ldloc, service);
+            context.Generator.Emit(OpCodes.Callvirt, _ServiceCacheAdd);
+
+            if (callSite.IsTypeDisposable)
+            {
+                // scope.CaptureIfDisposable(service)
+                context.Generator.Emit(OpCodes.Ldarg_1);
+                context.Generator.Emit(OpCodes.Ldloc, service);
+                context.Generator.Emit(OpCodes.Callvirt, _ScopeCaptureDisposable);
+            }
+            // }
+            
+            context.Generator.MarkLabel(returnLabel);
+            context.Generator.Emit(OpCodes.Ldloc, service);
+            context.Generator.Emit(OpCodes.Ret);
         }
 
         protected override object? VisitRootCache(ServiceCallSite callSite, ILResolverContext context)
