@@ -6,5 +6,5 @@ namespace DIContainer
     
     public delegate object? ServiceResolver(ServiceProviderScope scope);
     
-    public delegate object? ServiceInjector(IServiceProviderScope scope, object instance);
+    public delegate object? ServiceInjector(ServiceProviderScope scope, object instance);
 }

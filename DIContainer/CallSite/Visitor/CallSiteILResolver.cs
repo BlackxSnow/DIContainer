@@ -24,7 +24,7 @@ namespace DIContainer.CallSite.Visitor
         private readonly Dictionary<ServiceCacheKey, ResolverMethod> _ScopeResolverCache;
         private ServiceProviderScope _RootScope;
         private ICallSiteRuntimeResolver _RuntimeResolver;
-        private IInjectorILResolver _ILInjector;
+        public IInjectorILResolver ILInjector { get; }
 
         private static readonly FieldInfo _ConstantsField =
             typeof(IL.RuntimeContext).GetField(nameof(IL.RuntimeContext.Constants));
@@ -202,7 +202,7 @@ namespace DIContainer.CallSite.Visitor
             {
                 LocalBuilder instance = context.Generator.DeclareLocal(typeof(object));
                 context.Generator.Emit(OpCodes.Stloc, instance);
-                _ILInjector.Build(callSite.InjectorCallSite, new ILInjectorContext(context, instance));
+                ILInjector.Build(callSite.InjectorCallSite, new ILInjectorContext(context, instance));
                 context.Generator.Emit(OpCodes.Ldloc, instance);
             }
             
@@ -279,7 +279,7 @@ namespace DIContainer.CallSite.Visitor
             _Logger = logger;
             _RuntimeResolver = runtimeResolver;
             _RootScope = rootScope;
-            _ILInjector = injectorBuilder(this);
+            ILInjector = injectorBuilder(this);
         }
     }
 }

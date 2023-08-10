@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Reflection.Emit;
 using DIContainer.CallSite;
 using DIContainer.CallSite.Visitor;
+using DIContainer.Provider;
 using DIContainer.Utility;
 
 namespace DIContainer.Injector.Visitor
@@ -28,14 +30,51 @@ namespace DIContainer.Injector.Visitor
 
         public ServiceInjector BuildDelegate(InjectorCallSite callSite)
         {
-            if (!_InjectorCache.TryGetValue(callSite.TargetType, out InjectorMethod method))
-            {
-                throw new NotImplementedException();
-            }
+            if (_InjectorCache.TryGetValue(callSite.TargetType, out InjectorMethod method)) return method.Lambda;
+            
+            method = BuildMethod(callSite);
+            _InjectorCache.Add(callSite.TargetType, method);
 
             return method.Lambda;
         }
 
+        private InjectorMethod BuildMethod(InjectorCallSite callSite)
+        {
+            var method = new DynamicMethod($"ResolveService",
+                MethodAttributes.Public | MethodAttributes.Static,
+                CallingConventions.Standard,
+                typeof(object),
+                new[] { typeof(IL.RuntimeContext), typeof(ServiceProviderScope), typeof(object) },
+                GetType(),
+                true);
+            
+            ILGenerator generator = method.GetILGenerator();
+            
+            LocalBuilder instance = generator.DeclareLocal(typeof(object));
+            
+            generator.Emit(OpCodes.Ldarg_2);
+            generator.Emit(OpCodes.Stloc, instance);
+
+            var context = new ILInjectorContext(new ILResolverContext(generator), instance);
+            VisitCallSite(callSite, context);
+            
+            generator.Emit(OpCodes.Ldloc, instance);
+            generator.Emit(OpCodes.Ret);
+
+            var runtimeContext = new IL.RuntimeContext()
+            {
+                Constants = context.ResolverContext.Constants?.ToArray(),
+                Factories = context.ResolverContext.Factories?.ToArray()
+            };
+
+            return new InjectorMethod()
+            {
+                Context = runtimeContext,
+                DynamicMethod = method,
+                Lambda = (ServiceInjector)method.CreateDelegate(typeof(ServiceInjector), runtimeContext)
+            };
+        }
+        
         protected override void VisitMethod(InjectorCallSite callSite, ILInjectorContext context)
         {
             context.Generator.Emit(OpCodes.Ldloc, context.Instance);
