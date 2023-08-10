@@ -3,23 +3,20 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
 using DIContainer.Injector;
+using DIContainer.Injector.Visitor;
 using DIContainer.Provider;
 using DIContainer.Service;
+using DIContainer.Utility;
 using Microsoft.Extensions.Logging;
 
 namespace DIContainer.CallSite.Visitor
 {
     internal class CallSiteILResolver : CallSiteVisitor<ILResolverContext, object?>, ICallSiteILResolver
     {
-        private class RuntimeContext
-        {
-            public object?[]? Constants;
-            public ServiceFactory[]? Factories;
-        }
         private struct ResolverMethod
         {
             public ServiceResolver Lambda;
-            public RuntimeContext Context;
+            public IL.RuntimeContext Context;
             public DynamicMethod DynamicMethod;
         }
 
@@ -27,11 +24,12 @@ namespace DIContainer.CallSite.Visitor
         private readonly Dictionary<ServiceCacheKey, ResolverMethod> _ScopeResolverCache;
         private ServiceProviderScope _RootScope;
         private ICallSiteRuntimeResolver _RuntimeResolver;
+        private IInjectorILResolver _ILInjector;
 
         private static readonly FieldInfo _ConstantsField =
-            typeof(RuntimeContext).GetField(nameof(RuntimeContext.Constants));
+            typeof(IL.RuntimeContext).GetField(nameof(IL.RuntimeContext.Constants));
         private static readonly FieldInfo _FactoriesField =
-            typeof(RuntimeContext).GetField(nameof(RuntimeContext.Factories));
+            typeof(IL.RuntimeContext).GetField(nameof(IL.RuntimeContext.Factories));
 
         private static readonly MethodInfo _ServiceFactoryInvoke =
             typeof(ServiceFactory).GetMethod(nameof(ServiceFactory.Invoke))!;
@@ -56,6 +54,11 @@ namespace DIContainer.CallSite.Visitor
             return GetOrBuildResolver(callSite).Lambda;
         }
 
+        public void BuildInline(ServiceCallSite callSite, ILResolverContext context)
+        {
+            VisitCallSiteCache(callSite, context);
+        }
+        
         private ResolverMethod GetOrBuildResolver(ServiceCallSite callSite)
         {
             if (callSite.CacheInfo.Location != CacheLocation.Scope) return BuildResolver(callSite);
@@ -76,7 +79,7 @@ namespace DIContainer.CallSite.Visitor
                 MethodAttributes.Public | MethodAttributes.Static,
                 CallingConventions.Standard,
                 typeof(object),
-                new[] { typeof(RuntimeContext), typeof(ServiceProviderScope) },
+                new[] { typeof(IL.RuntimeContext), typeof(ServiceProviderScope) },
                 GetType(),
                 true);
             
@@ -90,7 +93,7 @@ namespace DIContainer.CallSite.Visitor
             }
             else BuildScopedResolver(callSite, context);
 
-            var runtimeContext = new RuntimeContext()
+            var runtimeContext = new IL.RuntimeContext()
             {
                 Constants = context.Constants?.ToArray(),
                 Factories = context.Factories?.ToArray()
@@ -192,7 +195,17 @@ namespace DIContainer.CallSite.Visitor
                     context.Generator.Emit(OpCodes.Unbox_Any, parameterCallSite.ServiceType);
                 }
             }
+            
             context.Generator.Emit(OpCodes.Newobj, callSite.ConstructorInfo);
+            
+            if (callSite.InjectorCallSite != null)
+            {
+                LocalBuilder instance = context.Generator.DeclareLocal(typeof(object));
+                context.Generator.Emit(OpCodes.Stloc, instance);
+                _ILInjector.Build(callSite.InjectorCallSite, new ILInjectorContext(context, instance));
+                context.Generator.Emit(OpCodes.Ldloc, instance);
+            }
+            
             if (callSite.ImplementationType!.IsValueType)
             {
                 context.Generator.Emit(OpCodes.Unbox_Any, callSite.ImplementationType);
@@ -260,12 +273,13 @@ namespace DIContainer.CallSite.Visitor
         }
 
         public CallSiteILResolver(ILogger<CallSiteILResolver> logger, ServiceProviderScope rootScope, 
-            ICallSiteRuntimeResolver runtimeResolver)
+            ICallSiteRuntimeResolver runtimeResolver, Func<CallSiteILResolver, IInjectorILResolver> injectorBuilder)
         {
             _ScopeResolverCache = new Dictionary<ServiceCacheKey, ResolverMethod>();
             _Logger = logger;
             _RuntimeResolver = runtimeResolver;
             _RootScope = rootScope;
+            _ILInjector = injectorBuilder(this);
         }
     }
 }

@@ -134,8 +134,10 @@
         <Compile Include="Injector\InjectorCallSiteFactory.cs" />
         <Compile Include="Injector\MethodInjectionPoint.cs" />
         <Compile Include="Injector\PropertyInjectionPoint.cs" />
+        <Compile Include="Injector\Visitor\IInjectorILResolver.cs" />
         <Compile Include="Injector\Visitor\IInjectorRuntimeResolver.cs" />
-        <Compile Include="Injector\Visitor\InjectorILBuilder.cs" />
+        <Compile Include="Injector\Visitor\ILInjectorContext.cs" />
+        <Compile Include="Injector\Visitor\InjectorILResolver.cs" />
         <Compile Include="Injector\Visitor\InjectorCallSiteVisitor.cs" />
         <Compile Include="Injector\Visitor\InjectorRuntimeResolver.cs" />
         <Compile Include="Injector\Visitor\InjectorRuntimeResolverContext.cs" />
@@ -143,8 +145,10 @@
         <Compile Include="NotableTypes\NotableType.cs" />
         <Compile Include="NotableTypes\NotableTypeFactory.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
+        <Compile Include="Provider\Engine\ILServiceProviderEngine.cs" />
         <Compile Include="Provider\Engine\IServiceProviderEngine.cs" />
         <Compile Include="Provider\Engine\RuntimeServiceProviderEngine.cs" />
+        <Compile Include="Provider\Engine\ServiceProviderEngineBase.cs" />
         <Compile Include="Provider\IRootServiceProvider.cs" />
         <Compile Include="Provider\IServiceProvider.cs" />
         <Compile Include="Provider\IServiceProviderScope.cs" />
@@ -166,6 +170,7 @@
         <Compile Include="Service\ServiceDescriptorExtensions.cs" />
         <Compile Include="Service\ServiceIdentifier.cs" />
         <Compile Include="Service\ServiceLifetime.cs" />
+        <Compile Include="Utility\IL.cs" />
     </ItemGroup>
     <ItemGroup>
       <EmbeddedResource Include="Resources\Exceptions.en.resx">

@@ -3,8 +3,9 @@ using DIContainer.Provider;
 
 namespace DIContainer.CallSite.Visitor
 {
-    public interface ICallSiteILResolver
+    internal interface ICallSiteILResolver
     {
         ServiceResolver Build(ServiceCallSite callSite);
+        void BuildInline(ServiceCallSite callSite, ILResolverContext context);
     }
 }

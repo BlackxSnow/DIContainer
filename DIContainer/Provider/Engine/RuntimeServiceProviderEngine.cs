@@ -5,22 +5,21 @@ using DIContainer.Injector.Visitor;
 
 namespace DIContainer.Provider.Engine
 {
-    internal class RuntimeServiceProviderEngine : IServiceProviderEngine
+    internal class RuntimeServiceProviderEngine : ServiceProviderEngineBase
     {
-        public ICallSiteRuntimeResolver RuntimeResolver { get; }
-        public ServiceResolver BuildResolver(ServiceCallSite callSite)
+        public override ServiceResolver BuildResolver(ServiceCallSite callSite)
         {
             return scope => RuntimeResolver.Resolve(callSite, scope);
         }
 
-        public ServiceInjector BuildInjector(InjectorCallSite callSite)
+        public override ServiceInjector BuildInjector(InjectorCallSite callSite)
         {
             throw new System.NotImplementedException();
         }
 
-        public RuntimeServiceProviderEngine()
+        public RuntimeServiceProviderEngine(ICallSiteRuntimeResolver runtimeResolver) : base(runtimeResolver)
         {
-            RuntimeResolver = new CallSiteRuntimeResolver(res => new InjectorRuntimeResolver(res));
+            
         }
     }
 }

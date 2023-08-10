@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using DIContainer.CallSite;
 using DIContainer.CallSite.Visitor;
 using DIContainer.Injector;
+using DIContainer.Injector.Visitor;
 using DIContainer.NotableTypes;
 using DIContainer.Provider.Engine;
 using DIContainer.Provider.Temporary;
@@ -13,7 +14,7 @@ namespace DIContainer.Provider
 {
     public class ServiceProvider : IRootServiceProvider
     {
-        public event Action Disposed;
+        public event Action? Disposed;
         public ServiceProviderScope RootScope { get; }
 
         internal IInjectorCallSiteFactory InjectorCallSiteFactory { get; }
@@ -91,6 +92,8 @@ namespace DIContainer.Provider
         
         public ServiceProvider(IEnumerable<ServiceDescriptor> services, ILoggerFactory loggerFactory)
         {
+            _Logger = loggerFactory.CreateLogger<ServiceProvider>();
+            
             RootScope = new ServiceProviderScope(this, true);
             var callSiteFactory = new CallSiteFactory(services, loggerFactory.CreateLogger<CallSiteFactory>());
             InjectorCallSiteFactory = new InjectorCallSiteFactory(loggerFactory.CreateLogger<InjectorCallSiteFactory>(), callSiteFactory);
@@ -99,9 +102,11 @@ namespace DIContainer.Provider
             
             _ServiceAccessors = new Dictionary<ServiceIdentifier, ServiceAccessor>();
 
-            _Engine = new RuntimeServiceProviderEngine();
-            
-            _Logger = loggerFactory.CreateLogger<ServiceProvider>();
+            var runtimeResolver = new CallSiteRuntimeResolver(res => new InjectorRuntimeResolver(res));
+            _Engine = new ILServiceProviderEngine(runtimeResolver, new CallSiteILResolver(
+                loggerFactory.CreateLogger<CallSiteILResolver>(), RootScope, runtimeResolver,
+                r => new InjectorILResolver(r)));
+
         }
         
         public ServiceProvider(IEnumerable<ServiceDescriptor> services) : this(services,

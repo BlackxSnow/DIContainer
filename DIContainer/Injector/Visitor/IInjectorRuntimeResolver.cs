@@ -1,6 +1,6 @@
 namespace DIContainer.Injector.Visitor
 {
-    public interface IInjectorRuntimeResolver
+    internal interface IInjectorRuntimeResolver
     {
         void Inject(InjectorCallSite callSite, InjectorRuntimeResolverContext context);
     }
