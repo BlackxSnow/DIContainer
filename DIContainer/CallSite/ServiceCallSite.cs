@@ -13,7 +13,8 @@ namespace DIContainer.CallSite
         public ServiceCacheInfo CacheInfo { get; }
         public object? Value;
 
-        public bool IsTypeDisposable => typeof(IDisposable).IsAssignableFrom(ImplementationType);
+        public bool IsTypeDisposable =>
+            ImplementationType == null || typeof(IDisposable).IsAssignableFrom(ImplementationType);
 
         public ServiceCallSite(ServiceCacheInfo cacheInfo, InjectorCallSite? injectorCallSite)
         {

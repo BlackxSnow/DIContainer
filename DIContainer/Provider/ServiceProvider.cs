@@ -13,7 +13,7 @@ namespace DIContainer.Provider
 {
     public class ServiceProvider : IRootServiceProvider
     {
-        public Action Disposed { get; set; }
+        public event Action Disposed;
         public ServiceProviderScope RootScope { get; }
 
         internal IInjectorCallSiteFactory InjectorCallSiteFactory { get; }
@@ -83,6 +83,7 @@ namespace DIContainer.Provider
         
         public void Dispose()
         {
+            if (IsDisposed) return;
             IsDisposed = true;
             RootScope.Dispose();
             Disposed?.Invoke();

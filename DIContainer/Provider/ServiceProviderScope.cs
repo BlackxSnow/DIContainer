@@ -24,7 +24,13 @@ namespace DIContainer.Provider
 
         public void Dispose()
         {
+            if (IsDisposed) return;
             IsDisposed = true;
+            RootProvider.Disposed -= Dispose;
+            if (IsRootScope)
+            {
+                RootProvider.Dispose();
+            }
             foreach (object obj in _DisposableObjects)
             {
                 switch (obj)

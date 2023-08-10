@@ -34,39 +34,42 @@ namespace DIContainer.CallSite.Visitor
             typeof(RuntimeContext).GetField(nameof(RuntimeContext.Factories));
 
         private static readonly MethodInfo _ServiceFactoryInvoke =
-            typeof(ServiceFactory).GetMethod(nameof(ServiceFactory.Invoke)) ?? throw new InvalidOperationException();
+            typeof(ServiceFactory).GetMethod(nameof(ServiceFactory.Invoke))!;
 
         private static readonly FieldInfo _ScopeResolvedServices =
             typeof(ServiceProviderScope).GetField(nameof(ServiceProviderScope.ResolvedServices),
-                BindingFlags.Instance | BindingFlags.NonPublic) ?? throw new InvalidOperationException();
+                BindingFlags.Instance | BindingFlags.NonPublic)!;
 
         private static readonly MethodInfo _ScopeCaptureDisposable =
-            typeof(ServiceProviderScope).GetMethod(nameof(ServiceProviderScope.CaptureIfDisposable)) ??
-            throw new InvalidOperationException();
+            typeof(ServiceProviderScope).GetMethod(nameof(ServiceProviderScope.CaptureIfDisposable))!;
 
         private static readonly MethodInfo _ServiceCacheTryGet =
             typeof(Dictionary<ServiceCacheKey, object>).GetMethod(
-                nameof(Dictionary<ServiceCacheKey, object>.TryGetValue)) ?? throw new InvalidOperationException();
+                nameof(Dictionary<ServiceCacheKey, object>.TryGetValue))!;
+
         private static readonly MethodInfo _ServiceCacheAdd =
-            typeof(Dictionary<ServiceCacheKey, object>).GetMethod(
-                nameof(Dictionary<ServiceCacheKey, object>.Add)) ?? throw new InvalidOperationException();
+            typeof(Dictionary<ServiceCacheKey, object>).GetMethod(nameof(Dictionary<ServiceCacheKey, object>.Add))!;
         
         
         public ServiceResolver Build(ServiceCallSite callSite)
         {
-            if (callSite.CacheInfo.Location != CacheLocation.Scope) return BuildResolver(callSite).Lambda;
+            return GetOrBuildResolver(callSite).Lambda;
+        }
 
+        private ResolverMethod GetOrBuildResolver(ServiceCallSite callSite)
+        {
+            if (callSite.CacheInfo.Location != CacheLocation.Scope) return BuildResolver(callSite);
+            
             if (_ScopeResolverCache.TryGetValue(callSite.CacheInfo.CacheKey, out ResolverMethod resolver))
             {
-                return resolver.Lambda;
+                return resolver;
             }
             
             resolver = BuildResolver(callSite);
             _ScopeResolverCache.Add(callSite.CacheInfo.CacheKey, resolver);
-            return resolver.Lambda;
-
+            return resolver;
         }
-
+        
         private ResolverMethod BuildResolver(ServiceCallSite callSite)
         {
             var method = new DynamicMethod($"ResolveService",
@@ -140,6 +143,7 @@ namespace DIContainer.CallSite.Visitor
                 context.Generator.Emit(OpCodes.Ldarg_1);
                 context.Generator.Emit(OpCodes.Ldloc, service);
                 context.Generator.Emit(OpCodes.Callvirt, _ScopeCaptureDisposable);
+                context.Generator.Emit(OpCodes.Pop);
             }
             // }
             
@@ -151,6 +155,30 @@ namespace DIContainer.CallSite.Visitor
         protected override object? VisitRootCache(ServiceCallSite callSite, ILResolverContext context)
         {
             AddConstant(context, _RuntimeResolver.Resolve(callSite, _RootScope));
+            return null;
+        }
+
+        protected override object? VisitScopeCache(ServiceCallSite callSite, ILResolverContext context)
+        {
+            ResolverMethod resolver = GetOrBuildResolver(callSite);
+            
+            AddConstant(context, resolver.Context);
+            context.Generator.Emit(OpCodes.Ldarg_1);
+            context.Generator.Emit(OpCodes.Call, resolver.DynamicMethod);
+            return null;
+        }
+
+        protected override object? VisitDisposeCache(ServiceCallSite callSite, ILResolverContext context)
+        {
+            if (callSite.IsTypeDisposable)
+            {
+                context.Generator.Emit(OpCodes.Ldarg_1);
+                VisitCallSite(callSite, context);
+                context.Generator.Emit(OpCodes.Callvirt, _ScopeCaptureDisposable);
+                return null;
+            }
+
+            VisitCallSite(callSite, context);
             return null;
         }
 
