@@ -115,7 +115,22 @@ namespace DIContainer.CallSite.Visitor
 
         protected override object? VisitEnumerable(EnumerableCallSite callSite, ILResolverContext context)
         {
-            throw new NotImplementedException();
+            LocalBuilder resolvedServices = context.Generator.DeclareLocal(callSite.ServiceType.MakeArrayType());
+            context.Generator.Emit(OpCodes.Ldc_I4, callSite.CallSites.Length);
+            context.Generator.Emit(OpCodes.Newarr, callSite.SingleServiceType);
+            context.Generator.Emit(OpCodes.Stloc, resolvedServices);
+
+            for (var i = 0; i < callSite.CallSites.Length; i++)
+            {
+                ServiceCallSite currentCallSite = callSite.CallSites[i];
+                context.Generator.Emit(OpCodes.Ldloc, resolvedServices);
+                context.Generator.Emit(OpCodes.Ldc_I4, i);
+                VisitCallSiteCache(currentCallSite, context);
+                context.Generator.Emit(OpCodes.Stelem, callSite.SingleServiceType);
+            }
+            
+            context.Generator.Emit(OpCodes.Ldloc, resolvedServices);
+            return null;
         }
 
         protected override object? VisitFactory(FactoryCallSite callSite, ILResolverContext context)
