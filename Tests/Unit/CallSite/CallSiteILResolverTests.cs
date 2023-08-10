@@ -28,16 +28,8 @@ namespace Tests.Unit.CallSite
             _LoggerFactory = Utility.GetLoggerFactory(testOutputHelper);
         }
 
-        public class InjectorMock : IInjectorRuntimeResolver
-        {
-            public void Inject(InjectorCallSite callSite, InjectorRuntimeResolverContext context)
-            {
-                
-            }
-        }
 
 
-        
         private class IntService
         {
             public int Value { get; set; }
@@ -68,7 +60,7 @@ namespace Tests.Unit.CallSite
         private CallSiteILResolver BuildILResolver(IRootServiceProvider provider)
         {
             return new CallSiteILResolver(_LoggerFactory.CreateLogger<CallSiteILResolver>(), provider.RootScope,
-                new CallSiteRuntimeResolver(_ => new InjectorMock()));
+                new CallSiteRuntimeResolver(_ => new RuntimeInjectorMock()), r => new InjectorILResolver(r));
         }
         
         private ConstructorCallSite BuildConstructorCallSite(Type serviceType, ServiceCallSite[] paramCallSites = null, 

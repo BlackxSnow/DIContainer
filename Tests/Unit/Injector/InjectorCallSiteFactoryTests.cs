@@ -13,7 +13,6 @@ namespace Tests.Unit.Injector
     {
         private readonly ITestOutputHelper _TestOutputHelper;
         private readonly ILoggerFactory _LoggerFactory;
-        private const BindingFlags AllInstance = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
         public InjectorCallSiteFactoryTests(ITestOutputHelper testOutputHelper)
         {
@@ -48,7 +47,7 @@ namespace Tests.Unit.Injector
 
             public static PropertyInfo GetPropertyInfo()
             {
-                return typeof(PublicPropertyService).GetProperty(nameof(StringDependency), AllInstance);
+                return typeof(PublicPropertyService).GetProperty(nameof(StringDependency), Utility.AllInstance);
             }
         }
 
@@ -76,7 +75,7 @@ namespace Tests.Unit.Injector
 
             public static PropertyInfo GetPropertyInfo()
             {
-                return typeof(PrivatePropertyService).GetProperty(nameof(StringDependency), AllInstance);
+                return typeof(PrivatePropertyService).GetProperty(nameof(StringDependency), Utility.AllInstance);
             }
         }
         
@@ -106,7 +105,7 @@ namespace Tests.Unit.Injector
 
             public static PropertyInfo[] GetPropertyInfo()
             {
-                return typeof(MultiPropertyService).GetProperties(AllInstance);
+                return typeof(MultiPropertyService).GetProperties(Utility.AllInstance);
             }
         }
         
@@ -140,7 +139,7 @@ namespace Tests.Unit.Injector
 
             public static PropertyInfo GetPropertyInfo()
             {
-                return typeof(NonInjectionPropertiesService).GetProperty(nameof(StringDependency), AllInstance);
+                return typeof(NonInjectionPropertiesService).GetProperty(nameof(StringDependency), Utility.AllInstance);
             }
         }
         
@@ -171,7 +170,7 @@ namespace Tests.Unit.Injector
 
             public static MethodInfo GetInjectMethodInfo()
             {
-                return typeof(PublicMethodInjectedService).GetMethod(nameof(Inject), AllInstance);
+                return typeof(PublicMethodInjectedService).GetMethod(nameof(Inject), Utility.AllInstance);
             }
         }
         
@@ -201,7 +200,7 @@ namespace Tests.Unit.Injector
 
             public static MethodInfo GetInjectMethodInfo()
             {
-                return typeof(PrivateMethodInjectedService).GetMethod(nameof(Inject), AllInstance);
+                return typeof(PrivateMethodInjectedService).GetMethod(nameof(Inject), Utility.AllInstance);
             }
         }
         

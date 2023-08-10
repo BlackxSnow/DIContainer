@@ -1,3 +1,4 @@
+using System.Reflection;
 using Microsoft.Extensions.Logging;
 using Xunit.Abstractions;
 
@@ -13,5 +14,7 @@ namespace Tests
                 builder.AddFilter("*", LogLevel.Trace);
             });
         }
+        
+        public const BindingFlags AllInstance = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
     }
 }

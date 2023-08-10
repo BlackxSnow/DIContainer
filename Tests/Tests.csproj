@@ -189,6 +189,7 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="Mock\RuntimeInjectorMock.cs" />
         <Compile Include="Mock\ServiceProviderMock.cs" />
         <Compile Include="Tests.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
@@ -196,6 +197,7 @@
         <Compile Include="Unit\CallSite\CallSiteILResolverTests.cs" />
         <Compile Include="Unit\CallSite\CallSiteRuntimeResolverTests.cs" />
         <Compile Include="Unit\Injector\InjectorCallSiteFactoryTests.cs" />
+        <Compile Include="Unit\Injector\InjectorILResolverTests.cs" />
         <Compile Include="Unit\Injector\InjectorRuntimeResolverTests.cs" />
         <Compile Include="Utility.cs" />
     </ItemGroup>
