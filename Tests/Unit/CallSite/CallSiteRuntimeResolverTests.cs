@@ -9,6 +9,7 @@ using DIContainer.Injector;
 using DIContainer.Injector.Visitor;
 using DIContainer.Provider;
 using DIContainer.Service;
+using Tests.Mock;
 using Xunit;
 using Xunit.Abstractions;
 using IServiceProvider = DIContainer.Provider.IServiceProvider;
@@ -32,31 +33,6 @@ namespace Tests.Unit.CallSite
             }
         }
 
-        public class ServiceProviderMock : IRootServiceProvider
-        {
-            public TService GetService<TService>() => throw new NotImplementedException();
-
-            public object GetService(Type type) => throw new NotImplementedException();
-
-            public Action Disposed { get; set; }
-            public ServiceProviderScope RootScope { get; }
-            public IServiceProviderScope CreateScope()
-            {
-                return new ServiceProviderScope(this, false);
-            }
-
-            public ServiceProviderMock()
-            {
-                RootScope = new ServiceProviderScope(this, true);
-            }
-
-            public void Dispose()
-            {
-                RootScope.Dispose();
-                Disposed?.Invoke();
-            }
-        }
-        
         private class IntService
         {
             public int Value { get; set; }

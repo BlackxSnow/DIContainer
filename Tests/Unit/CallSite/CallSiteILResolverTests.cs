@@ -10,6 +10,7 @@ using DIContainer.Injector.Visitor;
 using DIContainer.Provider;
 using DIContainer.Service;
 using Microsoft.Extensions.Logging;
+using Tests.Mock;
 using Xunit;
 using Xunit.Abstractions;
 using IServiceProvider = DIContainer.Provider.IServiceProvider;
@@ -35,30 +36,7 @@ namespace Tests.Unit.CallSite
             }
         }
 
-        public class ServiceProviderMock : IRootServiceProvider
-        {
-            public TService GetService<TService>() => throw new NotSupportedException();
 
-            public object GetService(Type type) => throw new NotSupportedException();
-
-            public Action Disposed { get; set; }
-            public ServiceProviderScope RootScope { get; }
-            public IServiceProviderScope CreateScope()
-            {
-                return new ServiceProviderScope(this, false);
-            }
-
-            public ServiceProviderMock()
-            {
-                RootScope = new ServiceProviderScope(this, true);
-            }
-
-            public void Dispose()
-            {
-                RootScope.Dispose();
-                Disposed?.Invoke();
-            }
-        }
         
         private class IntService
         {
@@ -308,7 +286,7 @@ namespace Tests.Unit.CallSite
         public void PrimaryScopedResolution()
         {
             var provider = new ServiceProviderMock();
-            var resolverBuilder = BuildILResolver(provider);
+            CallSiteILResolver resolverBuilder = BuildILResolver(provider);
         
             ConstructorCallSite callSite = BuildConstructorCallSite(typeof(EmptyService), 
                 Array.Empty<ServiceCallSite>(), ServiceLifetime.Scoped);
@@ -329,56 +307,56 @@ namespace Tests.Unit.CallSite
             Assert.NotSame(firstObject, differentObject);
         }
 
-        //
-        // private class DisposableService : IDisposable
-        // {
-        //     public bool IsDisposed { get; private set; }
-        //     public void Dispose()
-        //     {
-        //         IsDisposed = true;
-        //     }
-        // }
-        //
-        // [Fact]
-        // public void SingletonDispose()
-        // {
-        //     var provider = new ServiceProviderMock();
-        //     var resolver = new CallSiteRuntimeResolver(_ => new InjectorMock());
-        //
-        //     var scope = new ServiceProviderScope(provider, false);
-        //     var secondScope = new ServiceProviderScope(provider, false);
-        //
-        //     ConstructorCallSite callSite = BuildConstructorCallSite(typeof(DisposableService), 
-        //         Array.Empty<ServiceCallSite>(), ServiceLifetime.Scoped);
-        //
-        //     var firstResolved = (DisposableService)resolver.Resolve(callSite, scope);
-        //     var differentScopeResolved = (DisposableService)resolver.Resolve(callSite, secondScope);
-        //     
-        //     scope.Dispose();
-        //     Assert.True(scope.IsDisposed);
-        //     Assert.True(firstResolved?.IsDisposed);
-        //     Assert.False(differentScopeResolved?.IsDisposed);
-        // }
-        //
-        // [Fact]
-        // public void ScopedDispose()
-        // {
-        //     var provider = new ServiceProviderMock();
-        //     var resolver = new CallSiteRuntimeResolver(_ => new InjectorMock());
-        //
-        //     var scope = new ServiceProviderScope(provider, false);
-        //     var secondScope = new ServiceProviderScope(provider, false);
-        //
-        //     ConstructorCallSite callSite = BuildConstructorCallSite(typeof(DisposableService), 
-        //         Array.Empty<ServiceCallSite>(), ServiceLifetime.Scoped);
-        //
-        //     var firstResolved = (DisposableService)resolver.Resolve(callSite, scope);
-        //     var differentScopeResolved = (DisposableService)resolver.Resolve(callSite, secondScope);
-        //     
-        //     scope.Dispose();
-        //     Assert.True(scope.IsDisposed);
-        //     Assert.True(firstResolved?.IsDisposed);
-        //     Assert.False(differentScopeResolved?.IsDisposed);
-        // }
+        
+        private class DisposableService : IDisposable
+        {
+            public bool IsDisposed { get; private set; }
+            public void Dispose()
+            {
+                IsDisposed = true;
+            }
+        }
+        
+        [Fact]
+        public void ScopedDispose()
+        {
+            var provider = new ServiceProviderMock();
+            CallSiteILResolver resolverBuilder = BuildILResolver(provider);
+        
+            var firstScope = (ServiceProviderScope)provider.CreateScope();
+            var secondScope = (ServiceProviderScope)provider.CreateScope();
+
+            ConstructorCallSite callSite = BuildConstructorCallSite(typeof(DisposableService), 
+                Array.Empty<ServiceCallSite>(), ServiceLifetime.Scoped);
+
+            ServiceResolver resolver = resolverBuilder.Build(callSite);
+
+            var firstResolved = (DisposableService)resolver(firstScope);
+            var secondResolved = (DisposableService)resolver(secondScope);
+
+            firstScope.Dispose();
+            Assert.True(firstScope.IsDisposed);
+            Assert.True(firstResolved?.IsDisposed);
+            Assert.False(secondResolved?.IsDisposed);
+        }
+        
+        [Fact]
+        public void SingletonDispose()
+        {
+            var provider = new ServiceProviderMock();
+            CallSiteILResolver resolverBuilder = BuildILResolver(provider);
+
+            ConstructorCallSite callSite = BuildConstructorCallSite(typeof(DisposableService), 
+                Array.Empty<ServiceCallSite>(), ServiceLifetime.Scoped);
+
+            ServiceResolver resolver = resolverBuilder.Build(callSite);
+
+            var resolved = (DisposableService)resolver(provider.RootScope);
+
+            provider.RootScope.Dispose();
+            Assert.True(provider.IsDisposed);
+            Assert.True(provider.RootScope.IsDisposed);
+            Assert.True(resolved?.IsDisposed);
+        }
     }
 }
