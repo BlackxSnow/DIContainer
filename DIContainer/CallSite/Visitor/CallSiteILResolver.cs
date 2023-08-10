@@ -28,6 +28,12 @@ namespace DIContainer.CallSite.Visitor
 
         private static readonly FieldInfo _ConstantsField =
             typeof(RuntimeContext).GetField(nameof(RuntimeContext.Constants));
+        private static readonly FieldInfo _FactoriesField =
+            typeof(RuntimeContext).GetField(nameof(RuntimeContext.Factories));
+
+        private static readonly MethodInfo _ServiceFactoryInvoke =
+            typeof(ServiceFactory).GetMethod(nameof(ServiceFactory.Invoke)) ?? throw new InvalidOperationException();
+        
         
         public ServiceResolver Build(ServiceCallSite callSite)
         {
@@ -135,7 +141,17 @@ namespace DIContainer.CallSite.Visitor
 
         protected override object? VisitFactory(FactoryCallSite callSite, ILResolverContext context)
         {
-            throw new NotImplementedException();
+            context.Factories ??= new List<ServiceFactory>();
+            
+            context.Generator.Emit(OpCodes.Ldarg_0);
+            context.Generator.Emit(OpCodes.Ldfld, _FactoriesField);
+            context.Generator.Emit(OpCodes.Ldc_I4, context.Factories.Count);
+            context.Generator.Emit(OpCodes.Ldelem, typeof(ServiceFactory));
+            context.Generator.Emit(OpCodes.Ldarg_1);
+            context.Generator.Emit(OpCodes.Callvirt, _ServiceFactoryInvoke);
+
+            context.Factories.Add(callSite.Factory);
+            return null;
         }
 
         private static void AddConstant(ILResolverContext context, object? constant)
