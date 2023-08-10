@@ -216,51 +216,51 @@ namespace Tests.Unit.CallSite
             Assert.All(service.IntServices, Assert.NotNull);
             Assert.Distinct(service.IntServices);
         }
-        //
-        // private FactoryCallSite BuildFactoryCallSite(Type serviceType, ServiceFactory factory)
-        // {
-        //     var cacheInfo = new ServiceCacheInfo(ServiceLifetime.Transient, new ServiceIdentifier(serviceType));
-        //     return new FactoryCallSite(cacheInfo, serviceType, factory);
-        // }
-        //
-        // [Fact]
-        // public void PrimaryFactoryResolution()
-        // {
-        //     var provider = new ServiceProviderMock();
-        //     var resolver = new CallSiteRuntimeResolver(_ => new InjectorMock());
-        //     
-        //     FactoryCallSite serviceCallSite = BuildFactoryCallSite(typeof(Service),
-        //         p => new Service(new IntService(), new StringService()));
-        //
-        //     object serviceObject = resolver.Resolve(serviceCallSite, provider.RootScope);
-        //     Assert.IsType<Service>(serviceObject);
-        //     var service = (Service)serviceObject;
-        //     Assert.NotNull(service);
-        //     Assert.NotNull(service.IntDep);
-        //     Assert.NotNull(service.StringDep);
-        // }
-        //
-        // [Fact]
-        // public void SecondaryFactoryResolution()
-        // {
-        //     var provider = new ServiceProviderMock();
-        //     var resolver = new CallSiteRuntimeResolver(_ => new InjectorMock());
-        //
-        //     FactoryCallSite intCallSite = BuildFactoryCallSite(typeof(IntService), p => new IntService());
-        //     FactoryCallSite stringCallSite = BuildFactoryCallSite(typeof(StringService), p => new StringService());
-        //
-        //     ConstructorCallSite serviceCallSite =
-        //         BuildConstructorCallSite(typeof(Service), new ServiceCallSite[] { intCallSite, stringCallSite });
-        //
-        //     object serviceObject = resolver.Resolve(serviceCallSite, provider.RootScope);
-        //     Assert.IsType<Service>(serviceObject);
-        //     var service = (Service)serviceObject;
-        //     Assert.NotNull(service);
-        //     Assert.NotNull(service.IntDep);
-        //     Assert.NotNull(service.StringDep);
-        // }
-        //
-        //
+        
+        private FactoryCallSite BuildFactoryCallSite(Type serviceType, ServiceFactory factory)
+        {
+            var cacheInfo = new ServiceCacheInfo(ServiceLifetime.Transient, new ServiceIdentifier(serviceType));
+            return new FactoryCallSite(cacheInfo, serviceType, factory);
+        }
+        
+        [Fact]
+        public void PrimaryFactoryResolution()
+        {
+            var provider = new ServiceProviderMock();
+            var resolverBuilder = new CallSiteILResolver(_LoggerFactory.CreateLogger<CallSiteILResolver>());
+            
+            FactoryCallSite serviceCallSite = BuildFactoryCallSite(typeof(Service),
+                p => new Service(new IntService(), new StringService()));
+        
+            ServiceResolver resolver = resolverBuilder.Build(serviceCallSite);
+            object serviceObject = resolver(provider.RootScope);
+
+            Assert.NotNull(serviceObject);
+            var service = Assert.IsType<Service>(serviceObject);
+            Assert.NotNull(service.StringDep);
+            Assert.NotNull(service.IntDep);
+        }
+        
+        [Fact]
+        public void SecondaryFactoryResolution()
+        {
+            var provider = new ServiceProviderMock();
+            var resolverBuilder = new CallSiteILResolver(_LoggerFactory.CreateLogger<CallSiteILResolver>());
+        
+            FactoryCallSite intCallSite = BuildFactoryCallSite(typeof(IntService), p => new IntService());
+            FactoryCallSite stringCallSite = BuildFactoryCallSite(typeof(StringService), p => new StringService());
+        
+            ConstructorCallSite serviceCallSite =
+                BuildConstructorCallSite(typeof(Service), new ServiceCallSite[] { intCallSite, stringCallSite });
+        
+            ServiceResolver resolver = resolverBuilder.Build(serviceCallSite);
+            object serviceObject = resolver(provider.RootScope);
+
+            Assert.NotNull(serviceObject);
+            var service = Assert.IsType<Service>(serviceObject);
+            Assert.NotNull(service.StringDep);
+            Assert.NotNull(service.IntDep);
+        }
         //
         // [Fact]
         // public void PrimarySingletonResolution()
