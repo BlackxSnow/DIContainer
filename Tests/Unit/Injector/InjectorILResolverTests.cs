@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using DIContainer;
 using DIContainer.CallSite;
@@ -36,28 +37,27 @@ namespace Tests.Unit.Injector
 
             public static InjectorCallSite GetInjectorCallSite()
             {
-                PropertyInfo property = typeof(InjectedService).GetProperty(nameof(DependencyOne), Utility.AllInstance);
-                MethodInfo method = typeof(InjectedService).GetMethod(nameof(Inject), Utility.AllInstance);
+                PropertyInfo property = typeof(InjectedService).GetProperty(nameof(DependencyOne), Utility.AllInstance)!;
+                MethodInfo method = typeof(InjectedService).GetMethod(nameof(Inject), Utility.AllInstance)!;
 
                 var propertyPoint =
-                    new PropertyInjectionPoint(property, new ConstantCallSite(typeof(string), "strDep"));
-                var methodPoint = new MethodInjectionPoint(method,
-                    new ServiceCallSite[] { new ConstantCallSite(typeof(int), 7) });
+                    new PropertyInjectionPoint(property, _StringCallSite);
+                var methodPoint = new MethodInjectionPoint(method, new ServiceCallSite[] { _IntCallSite });
                 return new InjectorCallSite(typeof(InjectedService), methodPoint, new[] { propertyPoint });
             }
         }
-        
-         
+
+        private const string TestString = "strDep";
+        private const int TestInt = 7;
+
+        private static readonly ConstantCallSite _IntCallSite = new(typeof(int), TestInt);
+        private static readonly ConstantCallSite _StringCallSite = new(typeof(string), TestString);
         
         [Fact]
         public void BuildInjectorDelegate()
         {
-            var provider = new ServiceProviderMock();
-            
-            var callSiteResolver = new CallSiteILResolver(_LoggerFactory.CreateLogger<CallSiteILResolver>(),
-                provider.RootScope, new CallSiteRuntimeResolver(r => new RuntimeInjectorMock()),
-                r => new InjectorILResolver(r));
-            
+            var callSiteResolver = new CallSiteILResolverMock(_IntCallSite, _StringCallSite);
+
             IInjectorILResolver injectorResolver = callSiteResolver.ILInjector;
 
             ServiceInjector injector = injectorResolver.BuildDelegate(InjectedService.GetInjectorCallSite());
@@ -70,10 +70,8 @@ namespace Tests.Unit.Injector
         {
             var provider = new ServiceProviderMock();
             
-            var callSiteResolver = new CallSiteILResolver(_LoggerFactory.CreateLogger<CallSiteILResolver>(),
-                provider.RootScope, new CallSiteRuntimeResolver(r => new RuntimeInjectorMock()),
-                r => new InjectorILResolver(r));
-            
+            var callSiteResolver = new CallSiteILResolverMock(_IntCallSite, _StringCallSite);
+
             IInjectorILResolver injectorResolver = callSiteResolver.ILInjector;
 
             ServiceInjector injector = injectorResolver.BuildDelegate(InjectedService.GetInjectorCallSite());
@@ -90,12 +88,8 @@ namespace Tests.Unit.Injector
         [Fact]
         public void InjectorCaching()
         {
-            var provider = new ServiceProviderMock();
-            
-            var callSiteResolver = new CallSiteILResolver(_LoggerFactory.CreateLogger<CallSiteILResolver>(),
-                provider.RootScope, new CallSiteRuntimeResolver(r => new RuntimeInjectorMock()),
-                r => new InjectorILResolver(r));
-            
+            var callSiteResolver = new CallSiteILResolverMock(_IntCallSite, _StringCallSite);
+
             IInjectorILResolver injectorResolver = callSiteResolver.ILInjector;
 
             ServiceInjector firstInjector = injectorResolver.BuildDelegate(InjectedService.GetInjectorCallSite());

@@ -14,6 +14,8 @@
         <AssemblyName>Tests</AssemblyName>
         <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
         <FileAlignment>512</FileAlignment>
+        <LangVersion>9</LangVersion>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
         <PlatformTarget>AnyCPU</PlatformTarget>
@@ -189,6 +191,7 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="Mock\CallSiteILResolverMock.cs" />
         <Compile Include="Mock\RuntimeInjectorMock.cs" />
         <Compile Include="Mock\ServiceProviderMock.cs" />
         <Compile Include="Tests.cs" />
