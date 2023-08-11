@@ -15,7 +15,7 @@ namespace DIContainer.Provider.Engine
 
         public override ServiceInjector BuildInjector(InjectorCallSite callSite)
         {
-            throw new System.NotImplementedException();
+            return ILResolver.ILInjector.BuildDelegate(callSite);
         }
 
         public ILServiceProviderEngine(ICallSiteRuntimeResolver runtimeResolver, ICallSiteILResolver ilResolver) : base(runtimeResolver)
