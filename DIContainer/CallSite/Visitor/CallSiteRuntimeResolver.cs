@@ -7,6 +7,9 @@ using DIContainer.Provider;
 
 namespace DIContainer.CallSite.Visitor
 {
+    /// <summary>
+    /// <inheritdoc cref="ICallSiteRuntimeResolver"/>
+    /// </summary>
     internal class CallSiteRuntimeResolver : CallSiteVisitor<RuntimeResolverContext, object?>, ICallSiteRuntimeResolver
     {
         public IInjectorRuntimeResolver InjectorResolver { get; }

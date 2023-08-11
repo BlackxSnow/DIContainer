@@ -3,6 +3,9 @@ using System.Reflection.Emit;
 
 namespace DIContainer.CallSite.Visitor
 {
+    /// <summary>
+    /// Contains data used during <see cref="CallSiteILResolver"/> operations.
+    /// </summary>
     internal class ILResolverContext
     {
         public ILGenerator Generator { get; }

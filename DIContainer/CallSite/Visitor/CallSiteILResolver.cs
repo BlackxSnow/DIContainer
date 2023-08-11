@@ -11,6 +11,9 @@ using Microsoft.Extensions.Logging;
 
 namespace DIContainer.CallSite.Visitor
 {
+    /// <summary>
+    /// <inheritdoc cref="ICallSiteILResolver"/>
+    /// </summary>
     internal class CallSiteILResolver : CallSiteVisitor<ILResolverContext, object?>, ICallSiteILResolver
     {
         private struct ResolverMethod
