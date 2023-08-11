@@ -26,11 +26,6 @@ namespace DIContainer.CallSite.Visitor
         private ICallSiteRuntimeResolver _RuntimeResolver;
         public IInjectorILResolver ILInjector { get; }
 
-        private static readonly FieldInfo _ConstantsField =
-            typeof(IL.RuntimeContext).GetField(nameof(IL.RuntimeContext.Constants));
-        private static readonly FieldInfo _FactoriesField =
-            typeof(IL.RuntimeContext).GetField(nameof(IL.RuntimeContext.Factories));
-
         private static readonly MethodInfo _ServiceFactoryInvoke =
             typeof(ServiceFactory).GetMethod(nameof(ServiceFactory.Invoke))!;
 
@@ -251,7 +246,7 @@ namespace DIContainer.CallSite.Visitor
             context.Factories ??= new List<ServiceFactory>();
             
             context.Generator.Emit(OpCodes.Ldarg_0);
-            context.Generator.Emit(OpCodes.Ldfld, _FactoriesField);
+            context.Generator.Emit(OpCodes.Ldfld, IL.RuntimeContextFactories);
             context.Generator.Emit(OpCodes.Ldc_I4, context.Factories.Count);
             context.Generator.Emit(OpCodes.Ldelem, typeof(ServiceFactory));
             context.Generator.Emit(OpCodes.Ldarg_1);
@@ -266,7 +261,7 @@ namespace DIContainer.CallSite.Visitor
             context.Constants ??= new List<object?>();
             
             context.Generator.Emit(OpCodes.Ldarg_0);
-            context.Generator.Emit(OpCodes.Ldfld, _ConstantsField);
+            context.Generator.Emit(OpCodes.Ldfld, IL.RuntimeContextConstants);
             context.Generator.Emit(OpCodes.Ldc_I4, context.Constants.Count);
             context.Generator.Emit(OpCodes.Ldelem, typeof(object));
             context.Constants.Add(constant);
