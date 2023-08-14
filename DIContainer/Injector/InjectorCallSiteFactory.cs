@@ -9,6 +9,9 @@ using Microsoft.Extensions.Logging;
 
 namespace DIContainer.Injector
 {
+    /// <summary>
+    /// <inheritdoc cref="IInjectorCallSiteFactory"/>
+    /// </summary>
     internal class InjectorCallSiteFactory : IInjectorCallSiteFactory
     {
         private Dictionary<Type, InjectorCallSite> _CallSiteCache;
@@ -23,6 +26,11 @@ namespace DIContainer.Injector
             return _CallSiteCache.TryGetValue(type, out InjectorCallSite callSite) ? callSite : BuildCallSite(type);
         }
         
+        /// <summary>
+        /// Build and cache an <see cref="InjectorCallSite"/> for <paramref name="type"/>.
+        /// </summary>
+        /// <param name="type">The target type of the call site.</param>
+        /// <returns>A call site for the specified type.</returns>
         private InjectorCallSite BuildCallSite(Type type)
         {
             var callSite = new InjectorCallSite(type, GetMethodInjectionPoint(type), GetPropertyInjectionPoints(type));
@@ -30,16 +38,24 @@ namespace DIContainer.Injector
             return callSite;
         }
         
+        /// <summary>
+        /// Attempt to build a <see cref="MethodInjectionPoint"/> for the target type.
+        /// </summary>
+        /// <param name="type"><inheritdoc cref="BuildCallSite"/></param>
+        /// <returns>The method injection point for the type, if any.</returns>
+        /// <exception cref="InvalidOperationException">Throws on discovery of multiple methods marked with <see cref="InjectionAttribute"/>.</exception>
         private MethodInjectionPoint? GetMethodInjectionPoint(Type type)
         {
             MethodInfo[] injectionMethods =
                 type.GetMethods(_AllInstance).Where(m => m.GetCustomAttribute(typeof(InjectionAttribute)) != null)
                     .ToArray();
-            if (injectionMethods.Length == 0) return null;
-            if (injectionMethods.Length > 1)
+            switch (injectionMethods.Length)
             {
-                throw new InvalidOperationException(
-                    string.Format(Exceptions.MultipleInjectionMethodsNotSupported, type));
+                case 0:
+                    return null;
+                case > 1:
+                    throw new InvalidOperationException(
+                        string.Format(Exceptions.MultipleInjectionMethodsNotSupported, type));
             }
 
             MethodInfo method = injectionMethods.First();
@@ -56,6 +72,12 @@ namespace DIContainer.Injector
             return new MethodInjectionPoint(method, parameterCallSites);
         }
         
+        /// <summary>
+        /// Attempt to build the <see cref="PropertyInjectionPoint">PropertyInjectionPoints</see> for the target type.
+        /// </summary>
+        /// <param name="type"><inheritdoc cref="BuildCallSite"/></param>
+        /// <returns>The property injection points for the type, if any.</returns>
+        /// <exception cref="InvalidOperationException">Throws on discovery of an injection property with no setter.</exception>
         private PropertyInjectionPoint[]? GetPropertyInjectionPoints(Type type)
         {
             PropertyInfo[] injectionProperties =

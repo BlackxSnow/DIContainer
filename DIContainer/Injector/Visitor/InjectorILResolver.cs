@@ -9,6 +9,9 @@ using DIContainer.Utility;
 
 namespace DIContainer.Injector.Visitor
 {
+    /// <summary>
+    /// <inheritdoc cref="IInjectorILResolver"/>
+    /// </summary>
     internal class InjectorILResolver : InjectorCallSiteVisitor<ILInjectorContext>, IInjectorILResolver
     {
 
@@ -38,6 +41,11 @@ namespace DIContainer.Injector.Visitor
             return method.Lambda;
         }
 
+        /// <summary>
+        /// Build an <see cref="InjectorMethod"/> for <paramref name="callSite"/>.
+        /// </summary>
+        /// <param name="callSite"><inheritdoc cref="IInjectorILResolver.Build"/></param>
+        /// <returns>The built <see cref="InjectorMethod"/>.</returns>
         private InjectorMethod BuildMethod(InjectorCallSite callSite)
         {
             var method = new DynamicMethod($"ResolveService",

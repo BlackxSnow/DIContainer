@@ -4,6 +4,9 @@ using DIContainer.CallSite.Visitor;
 
 namespace DIContainer.Injector.Visitor
 {
+    /// <summary>
+    /// <inheritdoc cref="IInjectorRuntimeResolver"/>
+    /// </summary>
     internal class InjectorRuntimeResolver : InjectorCallSiteVisitor<InjectorRuntimeResolverContext>, IInjectorRuntimeResolver
     {
 
