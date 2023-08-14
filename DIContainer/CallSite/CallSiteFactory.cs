@@ -31,6 +31,11 @@ namespace DIContainer.CallSite
                    TryBuildEnumerable(identifier);
         }
         
+        /// <summary>
+        /// Attempt to retrieve the descriptor for, and build a <see cref="ServiceCallSite"/> for the exact requested type.
+        /// </summary>
+        /// <param name="identifier"><inheritdoc cref="ICallSiteFactory.GetCallSite"/></param>
+        /// <returns><inheritdoc cref="ICallSiteFactory.GetCallSite"/></returns>
         private ServiceCallSite? TryBuildExact(ServiceIdentifier identifier)
         {
             if (_Descriptors.TryGetValue(identifier, out List<ServiceDescriptor> descriptors))
@@ -41,6 +46,12 @@ namespace DIContainer.CallSite
             return null;
         }
 
+        /// <summary>
+        /// Attempt to build a <see cref="ServiceCallSite"/> for the service described by <paramref name="descriptor"/>.
+        /// </summary>
+        /// <param name="descriptor">The descriptor for the requested service.</param>
+        /// <param name="identifier"><inheritdoc cref="ICallSiteFactory.GetCallSite"/></param>
+        /// <returns><inheritdoc cref="ICallSiteFactory.GetCallSite"/></returns>
         private ServiceCallSite? TryBuildExact(ServiceDescriptor descriptor, ServiceIdentifier identifier)
         {
             if (descriptor.ServiceType != identifier.ServiceType) return null;
@@ -68,6 +79,13 @@ namespace DIContainer.CallSite
             return _CallSiteCache[cacheInfo.CacheKey] = callSite;
         }
 
+        /// <summary>
+        /// Attempt to build an <see cref="EnumerableCallSite"/> of services matching the inner type of
+        /// <paramref name="enumerableIdentifier"/>, assuming it is a constructed <see cref="IEnumerable{T}"/>.
+        /// </summary>
+        /// <param name="enumerableIdentifier"><inheritdoc cref="ICallSiteFactory.GetCallSite"/></param>
+        /// <returns><inheritdoc cref="ICallSiteFactory.GetCallSite"/></returns>
+        /// <remarks>Method will fail if <paramref name="enumerableIdentifier.ServiceType"/> is not a constructed <see cref="IEnumerable{T}"/>.</remarks>
         private ServiceCallSite? TryBuildEnumerable(ServiceIdentifier enumerableIdentifier)
         {
             var cacheKey = new ServiceCacheKey(enumerableIdentifier);
@@ -79,59 +97,10 @@ namespace DIContainer.CallSite
             Type innerServiceType = enumerableIdentifier.ServiceType.GenericTypeArguments[0];
             var innerIdentifier = new ServiceIdentifier(innerServiceType);
 
-            ServiceCallSite[] callSites;
-
-            if (innerServiceType.IsConstructedGenericType)
-            {
-                bool hasExact = _Descriptors.TryGetValue(innerIdentifier, out List<ServiceDescriptor> exactDescriptors);
-                ServiceIdentifier genericIdentifier = innerIdentifier.GetGenericTypeDefinition();
-                bool hasOpenGeneric =
-                    _Descriptors.TryGetValue(genericIdentifier, out List<ServiceDescriptor> genericDescriptors);
-                int descriptorCount = (exactDescriptors?.Count ?? 0) + (genericDescriptors?.Count ?? 0);
-                if (descriptorCount == 0) return null;
-
-                callSites = new ServiceCallSite[descriptorCount];
-                var currentIndex = 0;
-                if (hasExact)
-                {
-                    foreach (ServiceDescriptor descriptor in exactDescriptors!)
-                    {
-                        ServiceCallSite? exactCallSite = TryBuildExact(descriptor, innerIdentifier);
-                        Debug.Assert(exactCallSite != null);
-                        cacheLocation = CacheUtil.GetCommonCacheLocation(cacheLocation, exactCallSite!.CacheInfo.Location);
-                        callSites[currentIndex] = exactCallSite;
-                        currentIndex++;
-                    }
-                }
-
-                if (hasOpenGeneric)
-                {
-                    foreach (ServiceDescriptor descriptor in genericDescriptors!)
-                    {
-                        ServiceCallSite? genericCallSite = TryBuildOpenGeneric(genericIdentifier);
-                        Debug.Assert(genericCallSite != null);
-                        cacheLocation =
-                            CacheUtil.GetCommonCacheLocation(cacheLocation, genericCallSite!.CacheInfo.Location);
-                        callSites[currentIndex] = genericCallSite;
-                        currentIndex++;
-                    }
-                }
-            }
-            else if (_Descriptors.TryGetValue(innerIdentifier, out List<ServiceDescriptor> descriptors))
-            {
-                callSites = new ServiceCallSite[descriptors.Count];
-                for (var i = 0; i < descriptors.Count; i++)
-                {
-                    cachedCallSite = TryBuildExact(descriptors[i], innerIdentifier)!;
-                    Debug.Assert(callSites[i] != null);
-                    cacheLocation = CacheUtil.GetCommonCacheLocation(cacheLocation, cachedCallSite.CacheInfo.Location);
-                    callSites[i] = cachedCallSite;
-                }
-            }
-            else
-            {
-                return null;
-            }
+            ServiceCallSite[]? callSites = innerServiceType.IsConstructedGenericType ? 
+                BuildCallSitesForConstructedGeneric(innerIdentifier, ref cacheLocation) :
+                BuildCallSitesForExact(innerIdentifier, ref cacheLocation);
+            if (callSites == null) return null;
 
             ServiceCacheInfo cacheInfo = cacheLocation is CacheLocation.Scope or CacheLocation.Root
                 ? new ServiceCacheInfo(cacheLocation, cacheKey)
@@ -139,6 +108,83 @@ namespace DIContainer.CallSite
             return _CallSiteCache[cacheKey] = new EnumerableCallSite(cacheInfo, innerServiceType, callSites);
         }
 
+        
+        /// <summary>
+        /// Retrieve all call sites matching the constructed generic <paramref name="identifier"/>.
+        /// </summary>
+        /// <param name="identifier">An identifier representing a constructed generic service type.</param>
+        /// <param name="cacheLocation">The broadest common cache location for the retrieved services.</param>
+        /// <returns>All valid call sites for <paramref name="identifier"/>, or null if none.</returns>
+        /// <remarks>The final value of <paramref name="cacheLocation"/> will never be broader than the input value.</remarks>
+        private ServiceCallSite[]? BuildCallSitesForConstructedGeneric(ServiceIdentifier identifier, ref CacheLocation cacheLocation)
+        {
+            bool hasExact = _Descriptors.TryGetValue(identifier, out List<ServiceDescriptor> exactDescriptors);
+            ServiceIdentifier genericIdentifier = identifier.GetGenericTypeDefinition();
+            bool hasOpenGeneric =
+                _Descriptors.TryGetValue(genericIdentifier, out List<ServiceDescriptor> genericDescriptors);
+            int descriptorCount = (exactDescriptors?.Count ?? 0) + (genericDescriptors?.Count ?? 0);
+            if (descriptorCount == 0) return null;
+
+            var callSites = new ServiceCallSite[descriptorCount];
+                
+            var currentIndex = 0;
+            if (hasExact)
+            {
+                foreach (ServiceDescriptor descriptor in exactDescriptors!)
+                {
+                    ServiceCallSite? exactCallSite = TryBuildExact(descriptor, identifier);
+                    Debug.Assert(exactCallSite != null);
+                    cacheLocation = CacheUtil.GetCommonCacheLocation(cacheLocation, exactCallSite!.CacheInfo.Location);
+                    callSites[currentIndex] = exactCallSite;
+                    currentIndex++;
+                }
+            }
+
+            if (!hasOpenGeneric) return callSites;
+            
+            foreach (ServiceDescriptor _ in genericDescriptors!)
+            {
+                ServiceCallSite? genericCallSite = TryBuildOpenGeneric(genericIdentifier);
+                Debug.Assert(genericCallSite != null);
+                cacheLocation =
+                    CacheUtil.GetCommonCacheLocation(cacheLocation, genericCallSite!.CacheInfo.Location);
+                callSites[currentIndex] = genericCallSite;
+                currentIndex++;
+            }
+
+            return callSites;
+        }
+        
+        /// <summary>
+        /// Retrieve all call sites matching <paramref name="identifier"/>.
+        /// </summary>
+        /// <param name="identifier">An identifier representing the desired service.</param>
+        /// <param name="cacheLocation"><inheritdoc cref="BuildCallSitesForConstructedGeneric"/></param>
+        /// <returns><inheritdoc cref="BuildCallSitesForConstructedGeneric"/></returns>
+        /// <remarks><inheritdoc cref="BuildCallSitesForConstructedGeneric"/></remarks>
+        private ServiceCallSite[]? BuildCallSitesForExact(ServiceIdentifier identifier, ref CacheLocation cacheLocation)
+        {
+            if (!_Descriptors.TryGetValue(identifier, out List<ServiceDescriptor> descriptors)) return null;
+            
+            var callSites = new ServiceCallSite[descriptors.Count];
+            for (var i = 0; i < descriptors.Count; i++)
+            {
+                ServiceCallSite callSite = TryBuildExact(descriptors[i], identifier)!;
+                Debug.Assert(callSites[i] != null);
+                cacheLocation = CacheUtil.GetCommonCacheLocation(cacheLocation, callSite.CacheInfo.Location);
+                callSites[i] = callSite;
+            }
+
+            return callSites;
+        }
+        
+        /// <summary>
+        /// Attempt to get an open generic type from <paramref name="identifier"/>, retrieve a descriptor for the open
+        /// generic service, and build a <see cref="ServiceCallSite"/> for the inner type of <paramref name="identifier"/>. 
+        /// </summary>
+        /// <param name="identifier"><inheritdoc cref="ICallSiteFactory.GetCallSite"/></param>
+        /// <returns><inheritdoc cref="ICallSiteFactory.GetCallSite"/></returns>
+        /// <remarks>Method will fail if <paramref name="identifier.ServiceType"/> is not a constructed generic type.</remarks>
         private ServiceCallSite? TryBuildOpenGeneric(ServiceIdentifier identifier)
         {
             if (!identifier.ServiceType.IsConstructedGenericType) return null;
@@ -152,6 +198,13 @@ namespace DIContainer.CallSite
             return null;
         }
 
+        /// <summary>
+        /// Attempt to build a <see cref="ServiceCallSite"/> for <paramref name="identifier">identifier's</paramref> inner
+        /// type, using an open generic <see cref="ServiceDescriptor"/>.
+        /// </summary>
+        /// <param name="descriptor">The open generic descriptor to construct the call site from.</param>
+        /// <param name="identifier"><inheritdoc cref="ICallSiteFactory.GetCallSite"/></param>
+        /// <returns><inheritdoc cref="ICallSiteFactory.GetCallSite"/></returns>
         private ServiceCallSite? TryBuildOpenGeneric(ServiceDescriptor descriptor, ServiceIdentifier identifier)
         {
             if (!identifier.ServiceType.IsConstructedGenericType ||
