@@ -6,6 +6,9 @@ using IServiceProvider = DIContainer.Provider.IServiceProvider;
 
 namespace DIContainer.CallSite
 {
+    /// <summary>
+    /// Contains resolution data for IServiceProvider requests.
+    /// </summary>
     public class ServiceProviderCallSite : ServiceCallSite
     {
         public override CallSiteKind Kind => CallSiteKind.ServiceProvider;

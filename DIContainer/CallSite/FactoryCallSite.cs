@@ -4,6 +4,9 @@ using DIContainer.Service;
 
 namespace DIContainer.CallSite
 {
+    /// <summary>
+    /// Contains resolution data for a service implementation that is built via a factory.
+    /// </summary>
     public class FactoryCallSite : ServiceCallSite
     {
         public override CallSiteKind Kind => CallSiteKind.Factory;

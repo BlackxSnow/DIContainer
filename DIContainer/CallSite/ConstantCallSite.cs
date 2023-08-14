@@ -3,6 +3,9 @@ using DIContainer.Service;
 
 namespace DIContainer.CallSite
 {
+    /// <summary>
+    /// Contains resolution data for a constant-value implementation of a service.
+    /// </summary>
     public class ConstantCallSite : ServiceCallSite
     {
         public override CallSiteKind Kind => CallSiteKind.Constant;

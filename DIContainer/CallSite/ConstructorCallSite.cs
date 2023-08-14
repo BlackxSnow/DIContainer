@@ -5,6 +5,9 @@ using DIContainer.Service;
 
 namespace DIContainer.CallSite
 {
+    /// <summary>
+    /// Contains resolution data for a service implementation that uses a constructor.
+    /// </summary>
     public class ConstructorCallSite : ServiceCallSite
     {
         public override CallSiteKind Kind => CallSiteKind.Constructor;
