@@ -38,6 +38,11 @@ namespace Tests.Unit.Injector
                 IntCallSite = new ConstantCallSite(typeof(int), iVal);
                 StringCallSite = new ConstantCallSite(typeof(string), sVal);
             }
+
+            public bool IsService(Type type)
+            {
+                throw new NotSupportedException();
+            }
         }
 
         private class PublicPropertyService

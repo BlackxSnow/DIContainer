@@ -25,6 +25,12 @@ namespace DIContainer.CallSite
             return _CallSiteCache.TryGetValue(key, out ServiceCallSite callSite) ? callSite : BuildCallSite(identifier);
         }
 
+        public bool IsService(Type type)
+        {
+            var identifier = new ServiceIdentifier(type);
+            return _Descriptors.ContainsKey(identifier);
+        }
+        
         private ServiceCallSite? BuildCallSite(ServiceIdentifier identifier)
         {
             return TryBuildExact(identifier) ??

@@ -5,7 +5,7 @@ namespace DIContainer.CallSite
     /// <summary>
     /// Provides retrieval of <see cref="ServiceCallSite">ServiceCallSites</see> by <see cref="ServiceIdentifier">ServiceIdentifiers</see>.
     /// </summary>
-    internal interface ICallSiteFactory
+    internal interface ICallSiteFactory : ITypeIsServiceLookup
     {
         /// <summary>
         /// Attempt to retrieve the <see cref="ServiceCallSite"/> represented by <paramref name="identifier"/>.
