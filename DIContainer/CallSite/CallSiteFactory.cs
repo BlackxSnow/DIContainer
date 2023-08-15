@@ -13,8 +13,9 @@ namespace DIContainer.CallSite
     internal class CallSiteFactory : ICallSiteFactory
     {
         internal IInjectorCallSiteFactory? InjectorCallSiteFactory { get; set; }
-        private Dictionary<ServiceIdentifier, List<ServiceDescriptor>> _Descriptors;
-        private Dictionary<ServiceCacheKey, ServiceCallSite> _CallSiteCache;
+        private readonly Dictionary<ServiceIdentifier, List<ServiceDescriptor>> _Descriptors;
+        private readonly Dictionary<ServiceCacheKey, ServiceCallSite> _CallSiteCache;
+        private readonly Dictionary<ServiceCacheKey, ServiceCallSite> _DeactivatedCache;
 
         private ILogger<CallSiteFactory> _Logger;
 
@@ -277,7 +278,7 @@ namespace DIContainer.CallSite
             return callSites;
         }
         
-        private void AddServices(IEnumerable<ServiceDescriptor> services)
+        public void AddServices(IEnumerable<ServiceDescriptor> services)
         {
             foreach (ServiceDescriptor descriptor in services)
             {
@@ -301,8 +302,40 @@ namespace DIContainer.CallSite
                     _Descriptors.Add(identifier, descriptors);
                 }
                 descriptors.Add(descriptor);
+                var cacheKey = new ServiceCacheKey(identifier);
+                
+                if (!_DeactivatedCache.TryGetValue(cacheKey, out ServiceCallSite? cached)) continue;
+                cached.IsDisabled = false;
+                _CallSiteCache.Add(cacheKey, cached);
+                _DeactivatedCache.Remove(cacheKey);
             }
             _Logger.LogDebug("Added services");
+        }
+
+        public void RemoveServices(IEnumerable<ServiceDescriptor> services)
+        {
+            foreach (ServiceDescriptor descriptor in services)
+            {
+                var identifier = new ServiceIdentifier(descriptor);
+                if (!_Descriptors.TryGetValue(identifier, out List<ServiceDescriptor> descriptors)) continue;
+
+                var key = new ServiceCacheKey(identifier);
+
+                if (_CallSiteCache.TryGetValue(key, out ServiceCallSite? cached))
+                {
+                    cached.IsDisabled = true;
+                    _CallSiteCache.Remove(key);
+                    _DeactivatedCache.Add(key, cached);
+                }
+                
+                if (descriptors.Count <= 1)
+                {
+                    _Descriptors.Remove(identifier);
+                    continue;
+                }
+
+                descriptors.Remove(descriptor);
+            }
         }
 
         private void ValidateOpenGenericDescriptor(ServiceDescriptor descriptor)
@@ -335,6 +368,7 @@ namespace DIContainer.CallSite
             _Logger = logger;
             _Descriptors = new Dictionary<ServiceIdentifier, List<ServiceDescriptor>>();
             _CallSiteCache = new Dictionary<ServiceCacheKey, ServiceCallSite>();
+            _DeactivatedCache = new Dictionary<ServiceCacheKey, ServiceCallSite>();
             AddServices(descriptors);
         }
     }

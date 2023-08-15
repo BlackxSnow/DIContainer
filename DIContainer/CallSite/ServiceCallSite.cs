@@ -10,6 +10,10 @@ namespace DIContainer.CallSite
     public abstract class ServiceCallSite
     {
         /// <summary>
+        /// Whether the service represented by the call site is disabled.
+        /// </summary>
+        public bool IsDisabled { get; internal set; }
+        /// <summary>
         /// The type of service fulfilled by the call site.
         /// </summary>
         public abstract Type ServiceType { get; }
