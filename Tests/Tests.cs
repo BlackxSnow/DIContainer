@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using DIContainer.Injector;
 using DIContainer.Provider;
+using DIContainer.Provider.Temporary;
 using DIContainer.Service;
 using Microsoft.Extensions.Logging;
 using Xunit;
@@ -41,8 +42,6 @@ namespace Tests
             }
         }
 
-
-        
         [Fact]
         public void CreateEmptyProvider()
         {
@@ -236,6 +235,33 @@ namespace Tests
             Assert.NotNull(multiService.Empty2.Empty);
             Assert.NotNull(multiService.Empty3);
             Assert.NotNull(multiService.Empty3.Empty);
+        }
+
+        [Fact]
+        public void TemporaryContainer()
+        {
+            var descriptors = new ServiceDescriptor[]
+            {
+                new ServiceDescriptor(typeof(EmptyService), typeof(EmptyService), ServiceLifetime.Transient)
+            };
+            var tempContainer = new TemporaryServiceContainer(
+                new ServiceDescriptor(typeof(EmptyServiceContainer), typeof(EmptyServiceContainer), ServiceLifetime.Transient));
+            
+            var provider = new ServiceProvider(descriptors, Utility.GetLoggerFactory(_TestOutputHelper));
+
+            var containerPreAdd = provider.GetService<EmptyServiceContainer>();
+            
+            provider.AddTemporaryServices(tempContainer);
+
+            var containerPostAdd = provider.GetService<EmptyServiceContainer>();
+            
+            tempContainer.Dispose();
+
+            var containerDisposed = provider.GetService<EmptyServiceContainer>();
+            
+            Assert.Null(containerPreAdd);
+            Assert.NotNull(containerPostAdd);
+            Assert.Null(containerDisposed);
         }
     }
 }
