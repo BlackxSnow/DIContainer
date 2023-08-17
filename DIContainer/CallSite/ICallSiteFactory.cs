@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using DIContainer.Service;
 
 namespace DIContainer.CallSite
@@ -13,5 +14,8 @@ namespace DIContainer.CallSite
         /// <param name="identifier">The identifying key for the desired <see cref="ServiceCallSite"/>.</param>
         /// <returns>The call site on success, or null on failure.</returns>
         ServiceCallSite? GetCallSite(ServiceIdentifier identifier);
+
+        void AddServices(IEnumerable<ServiceDescriptor> services);
+        void RemoveServices(IEnumerable<ServiceDescriptor> services);
     }
 }

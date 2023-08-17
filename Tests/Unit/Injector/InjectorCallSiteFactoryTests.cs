@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using DIContainer.CallSite;
 using DIContainer.Injector;
@@ -31,6 +32,16 @@ namespace Tests.Unit.Injector
                 if (identifier.ServiceType == typeof(string)) return StringCallSite;
 
                 throw new InvalidOperationException("Only string and int are supported by this mock class");
+            }
+
+            public void AddServices(IEnumerable<ServiceDescriptor> services)
+            {
+                throw new NotSupportedException();
+            }
+
+            public void RemoveServices(IEnumerable<ServiceDescriptor> services)
+            {
+                throw new NotSupportedException();
             }
 
             public CallSiteFactory(int iVal, string sVal)
