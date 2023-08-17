@@ -156,7 +156,10 @@
         <Compile Include="Provider\ServiceAccessor.cs" />
         <Compile Include="Provider\ServiceProvider.cs" />
         <Compile Include="Provider\ServiceProviderScope.cs" />
+        <Compile Include="Provider\Temporary\ITemporaryServiceCollection.cs" />
         <Compile Include="Provider\Temporary\ITemporaryServiceContainer.cs" />
+        <Compile Include="Provider\Temporary\TemporaryServiceCollection.cs" />
+        <Compile Include="Provider\Temporary\TemporaryServiceContainer.cs" />
         <Compile Include="Resources\Exceptions.Designer.cs">
           <DesignTime>True</DesignTime>
           <AutoGen>True</AutoGen>
@@ -164,8 +167,11 @@
         </Compile>
         <Compile Include="Service\CacheLocation.cs" />
         <Compile Include="Service\CacheUtil.cs" />
+        <Compile Include="Service\IServiceCollection.cs" />
+        <Compile Include="Service\ITypeIsServiceLookup.cs" />
         <Compile Include="Service\ServiceCacheInfo.cs" />
         <Compile Include="Service\ServiceCacheKey.cs" />
+        <Compile Include="Service\ServiceCollection.cs" />
         <Compile Include="Service\ServiceDescriptor.cs" />
         <Compile Include="Service\ServiceDescriptorExtensions.cs" />
         <Compile Include="Service\ServiceIdentifier.cs" />

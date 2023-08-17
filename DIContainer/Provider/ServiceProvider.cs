@@ -22,6 +22,7 @@ namespace DIContainer.Provider
         internal NotableTypeFactory NotableTypeFactory { get; }
 
         private IServiceProviderEngine _Engine;
+        private HashSet<ITemporaryServiceContainer> _ActiveTemporaryContainers;
         private Dictionary<ServiceIdentifier, ServiceAccessor> _ServiceAccessors;
 
         private ILogger<ServiceProvider> _Logger;
@@ -49,15 +50,33 @@ namespace DIContainer.Provider
 
             return accessor.Resolver?.Invoke(scope);
         }
+
+        private void RemoveAccessor(ServiceDescriptor service)
+        {
+            _ServiceAccessors.Remove(new ServiceIdentifier(service));
+        }
         
         public void AddTemporaryServices(ITemporaryServiceContainer container)
         {
-            throw new NotImplementedException();
+            container.Disposed += OnTemporaryContainerDisposed;
+            _ActiveTemporaryContainers.Add(container);
+            CallSiteFactory.AddServices(container.Services);
+            foreach (ServiceDescriptor descriptor in container.Services)
+            {
+                RemoveAccessor(descriptor);
+            }
         }
 
         private void OnTemporaryContainerDisposed(ITemporaryServiceContainer container)
         {
-            throw new NotImplementedException();
+            if (!_ActiveTemporaryContainers.Contains(container)) return;
+
+            CallSiteFactory.RemoveServices(container.Services);
+            _ActiveTemporaryContainers.Remove(container);
+            foreach (ServiceDescriptor descriptor in container.Services)
+            {
+                RemoveAccessor(descriptor);
+            }
         }
 
         private ServiceAccessor BuildServiceAccessor(ServiceIdentifier identifier)
@@ -101,6 +120,7 @@ namespace DIContainer.Provider
             CallSiteFactory = callSiteFactory;
             
             _ServiceAccessors = new Dictionary<ServiceIdentifier, ServiceAccessor>();
+            _ActiveTemporaryContainers = new HashSet<ITemporaryServiceContainer>();
 
             var runtimeResolver = new CallSiteRuntimeResolver(res => new InjectorRuntimeResolver(res));
             _Engine = new ILServiceProviderEngine(runtimeResolver, new CallSiteILResolver(
@@ -122,6 +142,7 @@ namespace DIContainer.Provider
             
             RootScope = new ServiceProviderScope(this, true);
             _ServiceAccessors = new Dictionary<ServiceIdentifier, ServiceAccessor>();
+            _ActiveTemporaryContainers = new HashSet<ITemporaryServiceContainer>();
             CallSiteFactory = callSiteFactory;
             InjectorCallSiteFactory = injectorCallSiteFactory;
             _Engine = engine;
