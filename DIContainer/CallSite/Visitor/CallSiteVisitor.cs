@@ -15,7 +15,7 @@ namespace DIContainer.CallSite.Visitor
         /// <summary>
         /// Visit <paramref name="callSite"/>, accessing the associated cache (if any) when appropriate.
         /// </summary>
-        /// <param name="callSite">The call site representing the desired service.</param>
+        /// <param name="callSite">The call site representing the service implementation to resolve.</param>
         /// <param name="context">The object passed between methods as context.</param>
         /// <exception cref="ArgumentOutOfRangeException">Thrown on invalid call site <see cref="CacheLocation"/>.</exception>
         protected virtual TResult VisitCallSiteCache(ServiceCallSite callSite, TContext context)
