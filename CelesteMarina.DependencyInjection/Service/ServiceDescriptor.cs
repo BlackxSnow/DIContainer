@@ -69,7 +69,7 @@ namespace CelesteMarina.DependencyInjection.Service
             return new ServiceDescriptor(serviceType, implementationType, ServiceLifetime.Singleton);
         }
 
-        public static ServiceDescriptor Singleton<TService>(object instance) => Singleton(typeof(TService), instance);
+        public static ServiceDescriptor Singleton<TService>(TService instance) => Singleton(typeof(TService), instance!);
         public static ServiceDescriptor Singleton(Type serviceType, object instance)
         {
             return new ServiceDescriptor(serviceType, instance);
