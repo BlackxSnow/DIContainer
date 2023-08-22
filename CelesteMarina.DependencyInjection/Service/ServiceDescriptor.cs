@@ -33,5 +33,53 @@ namespace CelesteMarina.DependencyInjection.Service
             ImplementationFactory = factory;
             Lifetime = lifetime;
         }
+
+        public static ServiceDescriptor Transient<TService, TImplementation>() =>
+            Transient(typeof(TService), typeof(TImplementation));
+        public static ServiceDescriptor Transient(Type serviceType, Type implementationType)
+        {
+            return new ServiceDescriptor(serviceType, implementationType, ServiceLifetime.Transient);
+        }
+
+        public static ServiceDescriptor Transient<TService>(ServiceFactory factory) =>
+            Transient(typeof(TService), factory);
+        public static ServiceDescriptor Transient(Type serviceType, ServiceFactory factory)
+        {
+            return new ServiceDescriptor(serviceType, factory, ServiceLifetime.Transient);
+        }
+        
+        public static ServiceDescriptor Scoped<TService, TImplementation>() =>
+            Scoped(typeof(TService), typeof(TImplementation));
+        public static ServiceDescriptor Scoped(Type serviceType, Type implementationType)
+        {
+            return new ServiceDescriptor(serviceType, implementationType, ServiceLifetime.Scoped);
+        }
+
+        public static ServiceDescriptor Scoped<TService>(ServiceFactory factory) =>
+            Scoped(typeof(TService), factory);
+        public static ServiceDescriptor Scoped(Type serviceType, ServiceFactory factory)
+        {
+            return new ServiceDescriptor(serviceType, factory, ServiceLifetime.Scoped);
+        }
+        
+        public static ServiceDescriptor Singleton<TService, TImplementation>() =>
+            Singleton(typeof(TService), typeof(TImplementation));
+        public static ServiceDescriptor Singleton(Type serviceType, Type implementationType)
+        {
+            return new ServiceDescriptor(serviceType, implementationType, ServiceLifetime.Singleton);
+        }
+
+        public static ServiceDescriptor Singleton<TService>(object instance) => Singleton(typeof(TService), instance);
+        public static ServiceDescriptor Singleton(Type serviceType, object instance)
+        {
+            return new ServiceDescriptor(serviceType, instance);
+        }
+        
+        public static ServiceDescriptor Singleton<TService>(ServiceFactory factory) =>
+            Singleton(typeof(TService), factory);
+        public static ServiceDescriptor Singleton(Type serviceType, ServiceFactory factory)
+        {
+            return new ServiceDescriptor(serviceType, factory, ServiceLifetime.Singleton);
+        }
     }
 }
