@@ -318,6 +318,11 @@ namespace CelesteMarina.DependencyInjection.CallSite
             _Logger.LogDebug("Added services");
         }
 
+        public void AddService(ServiceIdentifier identifier, ServiceCallSite callSite)
+        {
+            _CallSiteCache[new ServiceCacheKey(identifier)] = callSite;
+        }
+
         public void RemoveServices(IEnumerable<ServiceDescriptor> services)
         {
             foreach (ServiceDescriptor descriptor in services)
