@@ -7,10 +7,12 @@ namespace CelesteMarina.DependencyInjection.Provider
     public class ServiceProviderScope : IServiceProviderScope, IServiceProvider, IServiceProviderScopeFactory
     {
         public bool IsRootScope { get; }
-        internal readonly IRootServiceProvider RootProvider;
-        private List<object> _DisposableObjects;
         public bool IsDisposed { get; private set; }
+        public IServiceProvider ServiceProvider => this;
+        
+        internal readonly IRootServiceProvider RootProvider;
         internal Dictionary<ServiceCacheKey, object?> ResolvedServices;
+        private List<object> _DisposableObjects;
         
         public TService? GetService<TService>()
         {
