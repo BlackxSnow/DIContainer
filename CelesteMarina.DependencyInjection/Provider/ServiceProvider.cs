@@ -114,10 +114,15 @@ namespace CelesteMarina.DependencyInjection.Provider
             _Logger = loggerFactory.CreateLogger<ServiceProvider>();
             
             RootScope = new ServiceProviderScope(this, true);
+            
             var callSiteFactory = new CallSiteFactory(services, loggerFactory.CreateLogger<CallSiteFactory>());
             InjectorCallSiteFactory = new InjectorCallSiteFactory(loggerFactory.CreateLogger<InjectorCallSiteFactory>(), callSiteFactory);
             callSiteFactory.InjectorCallSiteFactory = InjectorCallSiteFactory;
             CallSiteFactory = callSiteFactory;
+            
+            callSiteFactory.AddService(new ServiceIdentifier(typeof(IServiceProvider)), new ServiceProviderCallSite());
+            callSiteFactory.AddService(new ServiceIdentifier(typeof(IServiceProviderScopeFactory)),
+                new ConstantCallSite(typeof(IServiceProviderScopeFactory), RootScope));
             
             _ServiceAccessors = new Dictionary<ServiceIdentifier, ServiceAccessor>();
             _ActiveTemporaryContainers = new HashSet<ITemporaryServiceContainer>();
