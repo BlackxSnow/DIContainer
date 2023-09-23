@@ -15,8 +15,7 @@ namespace CelesteMarina.DependencyInjection.CallSite
         public override Type ServiceType => typeof(Provider.IServiceProvider);
         public override Type ImplementationType => typeof(ServiceProvider);
 
-        public ServiceProviderCallSite(ServiceCacheInfo cacheInfo, InjectorCallSite injectorCallSite) : base(cacheInfo,
-            injectorCallSite)
+        public ServiceProviderCallSite() : base(ServiceCacheInfo.None(typeof(IServiceProvider)), null)
         {
 
         }
