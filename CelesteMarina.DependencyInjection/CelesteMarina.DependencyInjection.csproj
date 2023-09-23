@@ -3,8 +3,8 @@
     
     <PropertyGroup>
         <Authors>Celeste Marina Soueid</Authors>
-        <Version>1.1.1</Version>
-        <FileVersion>1.1.1.0</FileVersion>
+        <Version>1.1.2</Version>
+        <FileVersion>1.1.2.0</FileVersion>
         <Title>CelesteMarina.DependencyInjection</Title>
         <PackageDescription>A light-weight dependency injection container inspired by the Microsoft DI.</PackageDescription>
         <PackageTags>Dependency Injection</PackageTags>
@@ -12,7 +12,7 @@
         <RepositoryUrl>https://github.com/BlackxSnow/DependencyInjection</RepositoryUrl>
         <Product>CelesteMarina.DependencyInjection</Product>
         <PackageReleaseNotes>
-            - Add missing ServiceProvider property to IServiceProviderScope
+            - Add default CallSites for IServiceProvider and IServiceProviderScopeFactory
         </PackageReleaseNotes>
         <TargetFramework>net48</TargetFramework>
         <LangVersion>9</LangVersion>
