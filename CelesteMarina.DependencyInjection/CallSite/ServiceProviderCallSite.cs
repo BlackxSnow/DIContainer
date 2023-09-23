@@ -12,7 +12,7 @@ namespace CelesteMarina.DependencyInjection.CallSite
     public class ServiceProviderCallSite : ServiceCallSite
     {
         public override CallSiteKind Kind => CallSiteKind.ServiceProvider;
-        public override Type ServiceType => typeof(Provider.IServiceProvider);
+        public override Type ServiceType => typeof(IServiceProvider);
         public override Type ImplementationType => typeof(ServiceProvider);
 
         public ServiceProviderCallSite() : base(ServiceCacheInfo.None(typeof(IServiceProvider)), null)

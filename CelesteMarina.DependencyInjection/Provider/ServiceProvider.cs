@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using CelesteMarina.DependencyInjection.CallSite;
 using CelesteMarina.DependencyInjection.CallSite.Visitor;
@@ -15,6 +16,8 @@ namespace CelesteMarina.DependencyInjection.Provider
     public class ServiceProvider : IRootServiceProvider
     {
         public event Action? Disposed;
+        public bool IsDisposed { get; private set; }
+        
         public ServiceProviderScope RootScope { get; }
 
         internal IInjectorCallSiteFactory InjectorCallSiteFactory { get; }
@@ -23,11 +26,10 @@ namespace CelesteMarina.DependencyInjection.Provider
 
         private IServiceProviderEngine _Engine;
         private HashSet<ITemporaryServiceContainer> _ActiveTemporaryContainers;
-        private Dictionary<ServiceIdentifier, ServiceAccessor> _ServiceAccessors;
+        private ConcurrentDictionary<ServiceIdentifier, ServiceAccessor> _ServiceAccessors;
 
         private ILogger<ServiceProvider> _Logger;
 
-        public bool IsDisposed { get; private set; }
 
         public TService? GetService<TService>()
         {
@@ -36,25 +38,18 @@ namespace CelesteMarina.DependencyInjection.Provider
 
         public object? GetService(Type type)
         {
-            return GetService(type, RootScope);
+            object? result = GetService(type, RootScope);
+            if (result == null || type.IsInstanceOfType(result)) return result;
+            throw new InvalidCastException();
         }
 
         public object? GetService(Type type, ServiceProviderScope scope)
         {
             var identifier = new ServiceIdentifier(type);
-            if (!_ServiceAccessors.TryGetValue(identifier, out ServiceAccessor accessor))
-            {
-                accessor = BuildServiceAccessor(identifier);
-                _ServiceAccessors.Add(identifier, accessor);
-            }
-
+            ServiceAccessor accessor = _ServiceAccessors.GetOrAdd(identifier, BuildServiceAccessor);
             return accessor.Resolver?.Invoke(scope);
         }
 
-        private void RemoveAccessor(ServiceDescriptor service)
-        {
-            _ServiceAccessors.Remove(new ServiceIdentifier(service));
-        }
         
         public void AddTemporaryServices(ITemporaryServiceContainer container)
         {
@@ -65,6 +60,10 @@ namespace CelesteMarina.DependencyInjection.Provider
             {
                 RemoveAccessor(descriptor);
             }
+        }
+        private void RemoveAccessor(ServiceDescriptor service)
+        {
+            _ServiceAccessors.TryRemove(new ServiceIdentifier(service), out _);
         }
 
         private void OnTemporaryContainerDisposed(ITemporaryServiceContainer container)
@@ -77,6 +76,21 @@ namespace CelesteMarina.DependencyInjection.Provider
             {
                 RemoveAccessor(descriptor);
             }
+        }
+        
+        public IServiceProviderScope CreateScope()
+        {
+            if (IsDisposed) throw new ObjectDisposedException(nameof(ServiceProvider));
+
+            return new ServiceProviderScope(this, false);
+        }
+        
+        public void Dispose()
+        {
+            if (IsDisposed) return;
+            IsDisposed = true;
+            RootScope.Dispose();
+            Disposed?.Invoke();
         }
 
         private ServiceAccessor BuildServiceAccessor(ServiceIdentifier identifier)
@@ -93,20 +107,14 @@ namespace CelesteMarina.DependencyInjection.Provider
             ServiceResolver resolver = _Engine.BuildResolver(callSite);
             return new ServiceAccessor() { CallSite = callSite, Resolver = resolver };
         }
-        
-        public IServiceProviderScope CreateScope()
-        {
-            if (IsDisposed) throw new ObjectDisposedException(nameof(ServiceProvider));
 
-            return new ServiceProviderScope(this, false);
-        }
-        
-        public void Dispose()
+        internal void ReplaceServiceAccessor(ServiceCallSite callSite, ServiceResolver resolver)
         {
-            if (IsDisposed) return;
-            IsDisposed = true;
-            RootScope.Dispose();
-            Disposed?.Invoke();
+            _ServiceAccessors[callSite.CacheInfo.CacheKey.Identifier] = new ServiceAccessor
+            {
+                CallSite = callSite,
+                Resolver = resolver
+            };
         }
         
         public ServiceProvider(IEnumerable<ServiceDescriptor> services, ILoggerFactory loggerFactory)
@@ -124,14 +132,16 @@ namespace CelesteMarina.DependencyInjection.Provider
             callSiteFactory.AddService(new ServiceIdentifier(typeof(IServiceProviderScopeFactory)),
                 new ConstantCallSite(typeof(IServiceProviderScopeFactory), RootScope));
             
-            _ServiceAccessors = new Dictionary<ServiceIdentifier, ServiceAccessor>();
+            _ServiceAccessors = new ConcurrentDictionary<ServiceIdentifier, ServiceAccessor>();
             _ActiveTemporaryContainers = new HashSet<ITemporaryServiceContainer>();
 
             var runtimeResolver = new CallSiteRuntimeResolver(res => new InjectorRuntimeResolver(res));
-            _Engine = new ILServiceProviderEngine(runtimeResolver, new CallSiteILResolver(
-                loggerFactory.CreateLogger<CallSiteILResolver>(), RootScope, runtimeResolver,
-                r => new InjectorILResolver(r)));
+            ILogger<CallSiteILResolver> ilLogger = loggerFactory.CreateLogger<CallSiteILResolver>();
+            IInjectorILResolver InjectorBuilder(ICallSiteILResolver r) => new InjectorILResolver(r);
+            var ilResolver = new CallSiteILResolver(ilLogger, RootScope, runtimeResolver, InjectorBuilder);
 
+            ILogger<DynamicServiceProviderEngine> engineLogger = loggerFactory.CreateLogger<DynamicServiceProviderEngine>();
+            _Engine = new DynamicServiceProviderEngine(runtimeResolver, ilResolver, this, engineLogger);
         }
         
         public ServiceProvider(IEnumerable<ServiceDescriptor> services) : this(services,
@@ -146,7 +156,7 @@ namespace CelesteMarina.DependencyInjection.Provider
             _Logger = loggerFactory.CreateLogger<ServiceProvider>();
             
             RootScope = new ServiceProviderScope(this, true);
-            _ServiceAccessors = new Dictionary<ServiceIdentifier, ServiceAccessor>();
+            _ServiceAccessors = new ConcurrentDictionary<ServiceIdentifier, ServiceAccessor>();
             _ActiveTemporaryContainers = new HashSet<ITemporaryServiceContainer>();
             CallSiteFactory = callSiteFactory;
             InjectorCallSiteFactory = injectorCallSiteFactory;

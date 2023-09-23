@@ -2,6 +2,7 @@ using CelesteMarina.DependencyInjection.CallSite;
 using CelesteMarina.DependencyInjection.CallSite.Visitor;
 using CelesteMarina.DependencyInjection.Injector;
 using CelesteMarina.DependencyInjection.Injector.Visitor;
+using Microsoft.Extensions.Logging;
 
 namespace CelesteMarina.DependencyInjection.Provider.Engine
 {
@@ -18,7 +19,8 @@ namespace CelesteMarina.DependencyInjection.Provider.Engine
             return ILResolver.ILInjector.BuildDelegate(callSite);
         }
 
-        public ILServiceProviderEngine(ICallSiteRuntimeResolver runtimeResolver, ICallSiteILResolver ilResolver) : base(runtimeResolver)
+        public ILServiceProviderEngine(ICallSiteRuntimeResolver runtimeResolver, ICallSiteILResolver ilResolver, 
+            ILogger<ILServiceProviderEngine> logger) : base(runtimeResolver, logger)
         {
             ILResolver = ilResolver;
         }

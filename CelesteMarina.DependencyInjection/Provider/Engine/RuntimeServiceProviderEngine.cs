@@ -2,6 +2,7 @@ using CelesteMarina.DependencyInjection.CallSite;
 using CelesteMarina.DependencyInjection.CallSite.Visitor;
 using CelesteMarina.DependencyInjection.Injector;
 using CelesteMarina.DependencyInjection.Injector.Visitor;
+using Microsoft.Extensions.Logging;
 
 namespace CelesteMarina.DependencyInjection.Provider.Engine
 {
@@ -17,7 +18,8 @@ namespace CelesteMarina.DependencyInjection.Provider.Engine
             throw new System.NotImplementedException();
         }
 
-        public RuntimeServiceProviderEngine(ICallSiteRuntimeResolver runtimeResolver) : base(runtimeResolver)
+        public RuntimeServiceProviderEngine(ICallSiteRuntimeResolver runtimeResolver,
+            ILogger<RuntimeServiceProviderEngine> logger) : base(runtimeResolver, logger)
         {
             
         }
