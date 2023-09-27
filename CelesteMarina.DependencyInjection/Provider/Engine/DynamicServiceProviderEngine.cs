@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using CelesteMarina.DependencyInjection.CallSite;
@@ -13,10 +14,16 @@ namespace CelesteMarina.DependencyInjection.Provider.Engine
         public override ServiceResolver BuildResolver(ServiceCallSite callSite)
         {
             var callCount = 0;
-            return scope =>
+            return providerScope =>
             {
-                object? resolved = RuntimeResolver.Resolve(callSite, scope);
-                if (Interlocked.Increment(ref callCount) == 1) Task.Run(() => BuildCompiledResolver(callSite));
+                using IDisposable? scope =
+                    Logger?.BeginScope("Building resolver for {CallSiteServiceType}", callSite.ServiceType);
+                object? resolved = RuntimeResolver.Resolve(callSite, providerScope);
+                
+                if (Interlocked.Increment(ref callCount) != 1) return resolved;
+                
+                Logger?.LogDebug("Starting compiled resolver build");
+                Task.Run(() => BuildCompiledResolver(callSite));
                 return resolved;
             };
         }
