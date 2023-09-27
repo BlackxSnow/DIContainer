@@ -5,7 +5,7 @@ namespace CelesteMarina.DependencyInjection.Extensions
 {
     public static partial class ServiceCollectionDescriptorExtensions
     {
-        private static IServiceCollection Add(IServiceCollection services, ServiceDescriptor descriptor)
+        public static IServiceCollection Add(IServiceCollection services, ServiceDescriptor descriptor)
         {
             services.Add(descriptor);
             return services;
