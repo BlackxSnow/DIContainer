@@ -79,6 +79,11 @@ namespace CelesteMarina.DependencyInjection.CallSite.Visitor
         
         private ResolverMethod BuildResolver(ServiceCallSite callSite)
         {
+            using IDisposable? scope =
+                _Logger?.BeginScope(
+                    "Building resolver for {CallSiteServiceType}\nImplementation: {CallSiteImplementation}",
+                    callSite.ServiceType, callSite.ImplementationType);
+            
             var method = new DynamicMethod($"ResolveService",
                 MethodAttributes.Public | MethodAttributes.Static,
                 CallingConventions.Standard,
@@ -113,6 +118,7 @@ namespace CelesteMarina.DependencyInjection.CallSite.Visitor
 
         private void BuildScopedResolver(ServiceCallSite callSite, ILResolverContext context)
         {
+            _Logger?.LogInformation("Building scoped resolver");
             LocalBuilder scopeServices = context.Generator.DeclareLocal(typeof(Dictionary<ServiceCacheKey, object?>));
             LocalBuilder cacheKey = context.Generator.DeclareLocal(typeof(ServiceCacheKey));
             LocalBuilder service = context.Generator.DeclareLocal(typeof(object));
@@ -161,12 +167,14 @@ namespace CelesteMarina.DependencyInjection.CallSite.Visitor
 
         protected override object? VisitRootCache(ServiceCallSite callSite, ILResolverContext context)
         {
+            _Logger?.LogTrace("Resolving {CallSiteServiceType} from root cache", callSite.ServiceType);
             AddConstant(context, _RuntimeResolver.Resolve(callSite, _RootScope));
             return null;
         }
 
         protected override object? VisitScopeCache(ServiceCallSite callSite, ILResolverContext context)
         {
+            _Logger?.LogTrace("Resolving {CallSiteServiceType} from scoped cache", callSite.ServiceType);
             ResolverMethod resolver = GetOrBuildResolver(callSite);
             
             AddConstant(context, resolver.Context);
@@ -177,6 +185,7 @@ namespace CelesteMarina.DependencyInjection.CallSite.Visitor
 
         protected override object? VisitDisposeCache(ServiceCallSite callSite, ILResolverContext context)
         {
+            _Logger?.LogTrace("Resolving {CallSiteServiceType} as transient", callSite.ServiceType);
             if (callSite.IsTypeDisposable)
             {
                 context.Generator.Emit(OpCodes.Ldarg_1);
@@ -191,6 +200,8 @@ namespace CelesteMarina.DependencyInjection.CallSite.Visitor
 
         protected override object? VisitConstructor(ConstructorCallSite callSite, ILResolverContext context)
         {
+            using IDisposable? scope =
+                _Logger?.BeginScope("Resolving {CallSiteServiceType} via constructor", callSite.ServiceType);
             foreach (ServiceCallSite parameterCallSite in callSite.ParameterCallSites)
             {
                 VisitCallSiteCache(parameterCallSite, context);
@@ -204,6 +215,7 @@ namespace CelesteMarina.DependencyInjection.CallSite.Visitor
             
             if (callSite.InjectorCallSite != null)
             {
+                _Logger?.LogTrace("Adding injection instructions");
                 LocalBuilder instance = context.Generator.DeclareLocal(typeof(object));
                 context.Generator.Emit(OpCodes.Stloc, instance);
                 ILInjector.Build(callSite.InjectorCallSite, new ILInjectorContext(context, instance));
@@ -220,18 +232,23 @@ namespace CelesteMarina.DependencyInjection.CallSite.Visitor
 
         protected override object? VisitConstant(ConstantCallSite callSite, ILResolverContext context)
         {
+            _Logger?.LogTrace("Visiting constant {CallSiteServiceType}", callSite.ServiceType);
             AddConstant(context, callSite.Value);
             return null;
         }
 
         protected override object? VisitServiceProvider(ServiceProviderCallSite callSite, ILResolverContext context)
         {
+            _Logger?.LogTrace("Visiting ServiceProvider");
             context.Generator.Emit(OpCodes.Ldarg_1);
             return null;
         }
 
         protected override object? VisitEnumerable(EnumerableCallSite callSite, ILResolverContext context)
         {
+            using IDisposable? scope =
+                _Logger?.BeginScope("Visiting IEnumerable {CallSiteServiceType}", callSite.ServiceType);
+            
             LocalBuilder resolvedServices = context.Generator.DeclareLocal(callSite.ServiceType.MakeArrayType());
             context.Generator.Emit(OpCodes.Ldc_I4, callSite.CallSites.Length);
             context.Generator.Emit(OpCodes.Newarr, callSite.SingleServiceType);
@@ -252,6 +269,8 @@ namespace CelesteMarina.DependencyInjection.CallSite.Visitor
 
         protected override object? VisitFactory(FactoryCallSite callSite, ILResolverContext context)
         {
+            using IDisposable? scope =
+                _Logger?.BeginScope("Visiting factory {CallSiteServiceType}", callSite.ServiceType);
             context.Factories ??= new List<ServiceFactory>();
             
             context.Generator.Emit(OpCodes.Ldarg_0);
