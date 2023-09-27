@@ -46,6 +46,7 @@ namespace CelesteMarina.DependencyInjection.Provider
         public object? GetService(Type type, ServiceProviderScope scope)
         {
             var identifier = new ServiceIdentifier(type);
+            _Logger?.LogTrace("GetService: {Type}", type);
             ServiceAccessor accessor = _ServiceAccessors.GetOrAdd(identifier, BuildServiceAccessor);
             return accessor.Resolver?.Invoke(scope);
         }
@@ -53,6 +54,7 @@ namespace CelesteMarina.DependencyInjection.Provider
         
         public void AddTemporaryServices(ITemporaryServiceContainer container)
         {
+            _Logger?.LogDebug("Adding temporary service container");
             container.Disposed += OnTemporaryContainerDisposed;
             _ActiveTemporaryContainers.Add(container);
             CallSiteFactory.AddServices(container.Services);
@@ -95,21 +97,32 @@ namespace CelesteMarina.DependencyInjection.Provider
 
         private ServiceAccessor BuildServiceAccessor(ServiceIdentifier identifier)
         {
+            using IDisposable? scope = _Logger?.BeginScope("Building ServiceAccessor for {IdentifierServiceType}",
+                identifier.ServiceType);
             ServiceCallSite? callSite = CallSiteFactory.GetCallSite(identifier);
-            if (callSite == null) return new ServiceAccessor { CallSite = callSite, Resolver = _ => null };
+            if (callSite == null)
+            {
+                _Logger?.LogDebug("Service type does not exist - returning null");
+                return new ServiceAccessor { CallSite = callSite, Resolver = _ => null };
+            }
 
             if (callSite.CacheInfo.Location == CacheLocation.Root)
             {
+                _Logger?.LogTrace("Returning root instance accessor");
                 object? instance = _Engine.RuntimeResolver.Resolve(callSite, RootScope);
                 return new ServiceAccessor() { CallSite = callSite, Resolver = _ => instance };
             }
 
+            _Logger?.LogTrace("Building resolver via engine");
             ServiceResolver resolver = _Engine.BuildResolver(callSite);
             return new ServiceAccessor() { CallSite = callSite, Resolver = resolver };
         }
 
         internal void ReplaceServiceAccessor(ServiceCallSite callSite, ServiceResolver resolver)
         {
+            _Logger?.LogDebug(
+                "Replacing service accessor for {CallSiteServiceType}, Implementation: {CallSiteImplementationType}",
+                callSite.ServiceType, callSite.ImplementationType);
             _ServiceAccessors[callSite.CacheInfo.CacheKey.Identifier] = new ServiceAccessor
             {
                 CallSite = callSite,
