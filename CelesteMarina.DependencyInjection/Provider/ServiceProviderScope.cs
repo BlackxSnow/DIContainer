@@ -16,12 +16,12 @@ namespace CelesteMarina.DependencyInjection.Provider
         
         public TService? GetService<TService>()
         {
-            return RootProvider.GetService<TService>();
+            return (TService?)RootProvider.GetService(typeof(TService), this);
         }
 
         public object? GetService(Type type)
         {
-            return RootProvider.GetService(type);
+            return RootProvider.GetService(type, this);
         }
 
         public void Dispose()

@@ -8,6 +8,7 @@ namespace CelesteMarina.DependencyInjection.Tests.Mock
         public TService GetService<TService>() => throw new NotSupportedException();
 
         public object GetService(Type type) => throw new NotSupportedException();
+        public object GetService(Type type, ServiceProviderScope scope) => throw new NotSupportedException();
 
         public bool IsDisposed { get; private set; }
         public event Action Disposed;
