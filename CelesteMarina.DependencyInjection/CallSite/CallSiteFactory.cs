@@ -240,7 +240,7 @@ namespace CelesteMarina.DependencyInjection.CallSite
         
         private ConstructorCallSite BuildConstructorCallSite(ServiceCacheInfo cacheInfo, ServiceIdentifier identifier, Type implementationType)
         {
-            _Logger.LogDebug("Building constructor CallSite for {ServiceTypeName}", identifier.ServiceType.Name);
+            _Logger?.LogDebug("Building constructor CallSite for {ServiceTypeName}", identifier.ServiceType.Name);
             ConstructorInfo[] constructors = implementationType.GetConstructors();
             if (constructors.Length == 0)
             {
@@ -316,7 +316,7 @@ namespace CelesteMarina.DependencyInjection.CallSite
                 _CallSiteCache.Add(cacheKey, cached);
                 _DeactivatedCache.Remove(cacheKey);
             }
-            _Logger.LogDebug("Added services");
+            _Logger?.LogDebug("Added services");
         }
 
         public void AddService(ServiceIdentifier identifier, ServiceCallSite callSite)
