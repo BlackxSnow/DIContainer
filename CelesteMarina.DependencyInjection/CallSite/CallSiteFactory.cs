@@ -131,7 +131,7 @@ namespace CelesteMarina.DependencyInjection.CallSite
             bool hasOpenGeneric =
                 _Descriptors.TryGetValue(genericIdentifier, out List<ServiceDescriptor> genericDescriptors);
             int descriptorCount = (exactDescriptors?.Count ?? 0) + (genericDescriptors?.Count ?? 0);
-            if (descriptorCount == 0) return null;
+            if (descriptorCount == 0) return Array.Empty<ServiceCallSite>();
 
             var callSites = new ServiceCallSite[descriptorCount];
                 
@@ -172,7 +172,8 @@ namespace CelesteMarina.DependencyInjection.CallSite
         /// <remarks><inheritdoc cref="BuildCallSitesForConstructedGeneric"/></remarks>
         private ServiceCallSite[]? BuildCallSitesForExact(ServiceIdentifier identifier, ref CacheLocation cacheLocation)
         {
-            if (!_Descriptors.TryGetValue(identifier, out List<ServiceDescriptor> descriptors)) return null;
+            if (!_Descriptors.TryGetValue(identifier, out List<ServiceDescriptor> descriptors))
+                return Array.Empty<ServiceCallSite>();
             
             var callSites = new ServiceCallSite[descriptors.Count];
             for (var i = 0; i < descriptors.Count; i++)
