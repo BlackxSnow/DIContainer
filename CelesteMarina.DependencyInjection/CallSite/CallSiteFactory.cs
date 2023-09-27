@@ -240,7 +240,9 @@ namespace CelesteMarina.DependencyInjection.CallSite
         
         private ConstructorCallSite BuildConstructorCallSite(ServiceCacheInfo cacheInfo, ServiceIdentifier identifier, Type implementationType)
         {
-            _Logger?.LogDebug("Building constructor CallSite for {ServiceTypeName}", identifier.ServiceType.Name);
+            using IDisposable? scope = _Logger?.BeginScope("Building constructor CallSite for {ServiceTypeName}",
+                identifier.ServiceType.Name);
+            
             ConstructorInfo[] constructors = implementationType.GetConstructors();
             if (constructors.Length == 0)
             {
@@ -272,6 +274,7 @@ namespace CelesteMarina.DependencyInjection.CallSite
 
         private ServiceCallSite[]? BuildParameterCallSites(ParameterInfo[] parameters)
         {
+            using IDisposable? scope = _Logger?.BeginScope("Building parameter callsites");
             var callSites = new ServiceCallSite[parameters.Length];
 
             for (var i = 0; i < parameters.Length; i++)
