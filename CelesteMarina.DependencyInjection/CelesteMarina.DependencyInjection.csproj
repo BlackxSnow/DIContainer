@@ -3,8 +3,8 @@
     
     <PropertyGroup>
         <Authors>Celeste Marina Soueid</Authors>
-        <Version>1.2.0</Version>
-        <FileVersion>1.2.0.0</FileVersion>
+        <Version>1.2.1</Version>
+        <FileVersion>1.2.1.0</FileVersion>
         <Title>CelesteMarina.DependencyInjection</Title>
         <PackageDescription>A light-weight dependency injection container inspired by the Microsoft DI.</PackageDescription>
         <PackageTags>Dependency Injection</PackageTags>
