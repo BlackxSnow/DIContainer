@@ -8,6 +8,7 @@ using CelesteMarina.DependencyInjection.Service;
 using CelesteMarina.DependencyInjection.Utility;
 using CelesteMarina.DependencyInjection.Injector;
 using Microsoft.Extensions.Logging;
+using IServiceProvider = CelesteMarina.DependencyInjection.Provider.IServiceProvider;
 
 namespace CelesteMarina.DependencyInjection.CallSite.Visitor
 {
@@ -23,7 +24,7 @@ namespace CelesteMarina.DependencyInjection.CallSite.Visitor
             public DynamicMethod DynamicMethod;
         }
 
-        private ILogger<CallSiteILResolver> _Logger;
+        private ILogger<CallSiteILResolver>? _Logger;
         private readonly Dictionary<ServiceCacheKey, ResolverMethod> _ScopeResolverCache;
         private ServiceProviderScope _RootScope;
         private ICallSiteRuntimeResolver _RuntimeResolver;
@@ -56,7 +57,12 @@ namespace CelesteMarina.DependencyInjection.CallSite.Visitor
         {
             VisitCallSiteCache(callSite, context);
         }
-        
+
+        public void OnInitialisationComplete(IServiceProvider provider)
+        {
+            _Logger = provider.GetService<ILogger<CallSiteILResolver>>();
+        }
+
         private ResolverMethod GetOrBuildResolver(ServiceCallSite callSite)
         {
             if (callSite.CacheInfo.Location != CacheLocation.Scope) return BuildResolver(callSite);
@@ -270,7 +276,7 @@ namespace CelesteMarina.DependencyInjection.CallSite.Visitor
             context.Constants.Add(constant);
         }
 
-        public CallSiteILResolver(ILogger<CallSiteILResolver> logger, ServiceProviderScope rootScope, 
+        public CallSiteILResolver(ILogger<CallSiteILResolver>? logger, ServiceProviderScope rootScope, 
             ICallSiteRuntimeResolver runtimeResolver, Func<CallSiteILResolver, IInjectorILResolver> injectorBuilder)
         {
             _ScopeResolverCache = new Dictionary<ServiceCacheKey, ResolverMethod>();

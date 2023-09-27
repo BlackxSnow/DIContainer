@@ -1,6 +1,7 @@
 using System;
 using CelesteMarina.DependencyInjection.Injector.Visitor;
 using CelesteMarina.DependencyInjection.Provider;
+using IServiceProvider = CelesteMarina.DependencyInjection.Provider.IServiceProvider;
 
 namespace CelesteMarina.DependencyInjection.CallSite.Visitor
 {
@@ -22,5 +23,7 @@ namespace CelesteMarina.DependencyInjection.CallSite.Visitor
         /// <param name="callSite"><inheritdoc cref="Build"/></param>
         /// <param name="context">The context to append to.</param>
         void BuildInline(ServiceCallSite callSite, ILResolverContext context);
+        
+        void OnInitialisationComplete(IServiceProvider provider);
     }
 }

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using CelesteMarina.DependencyInjection.Provider;
 using CelesteMarina.DependencyInjection.Service;
 
 namespace CelesteMarina.DependencyInjection.CallSite
@@ -17,5 +18,7 @@ namespace CelesteMarina.DependencyInjection.CallSite
 
         void AddServices(IEnumerable<ServiceDescriptor> services);
         void RemoveServices(IEnumerable<ServiceDescriptor> services);
+
+        void OnInitialisationComplete(IServiceProvider provider);
     }
 }

@@ -28,7 +28,7 @@ namespace CelesteMarina.DependencyInjection.Provider
         private HashSet<ITemporaryServiceContainer> _ActiveTemporaryContainers;
         private ConcurrentDictionary<ServiceIdentifier, ServiceAccessor> _ServiceAccessors;
 
-        private ILogger<ServiceProvider> _Logger;
+        private ILogger? _Logger;
 
 
         public TService? GetService<TService>()
@@ -116,6 +116,17 @@ namespace CelesteMarina.DependencyInjection.Provider
                 Resolver = resolver
             };
         }
+
+        private void ReplaceInitialisationLoggers()
+        {
+            _Logger!.LogInformation("Discarding and attempting to replace initialisation logger");
+            _Logger = GetService<ILogger<ServiceProvider>>();
+            _Logger?.LogInformation("Successfully replaced initialisation logger");
+            
+            CallSiteFactory.OnInitialisationComplete(this);
+            InjectorCallSiteFactory.OnInitialisationComplete(this);
+            _Engine.OnInitialisationComplete(this);
+        }
         
         public ServiceProvider(IEnumerable<ServiceDescriptor> services, ILoggerFactory loggerFactory)
         {
@@ -136,12 +147,13 @@ namespace CelesteMarina.DependencyInjection.Provider
             _ActiveTemporaryContainers = new HashSet<ITemporaryServiceContainer>();
 
             var runtimeResolver = new CallSiteRuntimeResolver(res => new InjectorRuntimeResolver(res));
-            ILogger<CallSiteILResolver> ilLogger = loggerFactory.CreateLogger<CallSiteILResolver>();
+            ILogger<CallSiteILResolver>? ilLogger = loggerFactory.CreateLogger<CallSiteILResolver>();
             IInjectorILResolver InjectorBuilder(ICallSiteILResolver r) => new InjectorILResolver(r);
             var ilResolver = new CallSiteILResolver(ilLogger, RootScope, runtimeResolver, InjectorBuilder);
 
-            ILogger<DynamicServiceProviderEngine> engineLogger = loggerFactory.CreateLogger<DynamicServiceProviderEngine>();
+            ILogger<DynamicServiceProviderEngine>? engineLogger = loggerFactory.CreateLogger<DynamicServiceProviderEngine>();
             _Engine = new DynamicServiceProviderEngine(runtimeResolver, ilResolver, this, engineLogger);
+            ReplaceInitialisationLoggers();
         }
         
         public ServiceProvider(IEnumerable<ServiceDescriptor> services) : this(services,

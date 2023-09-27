@@ -8,7 +8,7 @@ namespace CelesteMarina.DependencyInjection.Provider.Engine
 {
     internal class DynamicServiceProviderEngine : ILServiceProviderEngine
     {
-        private ServiceProvider _ServiceProvider;
+        private readonly ServiceProvider _ServiceProvider;
 
         public override ServiceResolver BuildResolver(ServiceCallSite callSite)
         {
@@ -26,9 +26,14 @@ namespace CelesteMarina.DependencyInjection.Provider.Engine
             ServiceResolver resolver = ILResolver.Build(callSite);
             _ServiceProvider.ReplaceServiceAccessor(callSite, resolver);
         }
-        
+
+        public override void OnInitialisationComplete(IServiceProvider provider)
+        {
+            Logger = provider.GetService<ILogger<DynamicServiceProviderEngine>>();
+        }
+
         public DynamicServiceProviderEngine(ICallSiteRuntimeResolver runtimeResolver, ICallSiteILResolver ilResolver,
-            ServiceProvider provider, ILogger<DynamicServiceProviderEngine> logger) 
+            ServiceProvider provider, ILogger<DynamicServiceProviderEngine>? logger) 
             : base(runtimeResolver, ilResolver, logger)
         {
             _ServiceProvider = provider;

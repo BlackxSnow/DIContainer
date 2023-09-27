@@ -19,8 +19,14 @@ namespace CelesteMarina.DependencyInjection.Provider.Engine
             return ILResolver.ILInjector.BuildDelegate(callSite);
         }
 
+        public override void OnInitialisationComplete(IServiceProvider provider)
+        {
+            Logger = provider.GetService<ILogger<ILServiceProviderEngine>>();
+            ILResolver.OnInitialisationComplete(provider);
+        }
+
         public ILServiceProviderEngine(ICallSiteRuntimeResolver runtimeResolver, ICallSiteILResolver ilResolver, 
-            ILogger<ILServiceProviderEngine> logger) : base(runtimeResolver, logger)
+            ILogger<ILServiceProviderEngine>? logger) : base(runtimeResolver, logger)
         {
             ILResolver = ilResolver;
         }

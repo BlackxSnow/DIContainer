@@ -1,4 +1,5 @@
 using System;
+using IServiceProvider = CelesteMarina.DependencyInjection.Provider.IServiceProvider;
 
 namespace CelesteMarina.DependencyInjection.Injector
 {
@@ -13,5 +14,7 @@ namespace CelesteMarina.DependencyInjection.Injector
         /// <param name="type">The target injected type of the call site.</param>
         /// <returns>An injector call site for <paramref name="type"/>.</returns>
         InjectorCallSite GetCallSite(Type type);
+
+        void OnInitialisationComplete(IServiceProvider provider);
     }
 }

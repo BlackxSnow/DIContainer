@@ -7,6 +7,7 @@ using CelesteMarina.DependencyInjection.Service;
 using CelesteMarina.DependencyInjection.Extensions;
 using CelesteMarina.DependencyInjection.Provider;
 using Microsoft.Extensions.Logging;
+using IServiceProvider = CelesteMarina.DependencyInjection.Provider.IServiceProvider;
 
 namespace CelesteMarina.DependencyInjection.CallSite
 {
@@ -17,7 +18,7 @@ namespace CelesteMarina.DependencyInjection.CallSite
         private readonly Dictionary<ServiceCacheKey, ServiceCallSite> _CallSiteCache;
         private readonly Dictionary<ServiceCacheKey, ServiceCallSite> _DeactivatedCache;
 
-        private ILogger<CallSiteFactory> _Logger;
+        private ILogger? _Logger;
 
         public ServiceCallSite? GetCallSite(ServiceIdentifier identifier)
         {
@@ -372,6 +373,11 @@ namespace CelesteMarina.DependencyInjection.CallSite
                 throw new ArgumentException(string.Format(Exceptions.GenericParameterCountServiceImplementationNotEqual,
                     descriptor.ServiceType, implementationType));
             }
+        }
+
+        public void OnInitialisationComplete(IServiceProvider provider)
+        {
+            _Logger = provider.GetService<ILogger<CallSiteFactory>>();
         }
         
         public CallSiteFactory(IEnumerable<ServiceDescriptor> descriptors, ILogger<CallSiteFactory> logger)

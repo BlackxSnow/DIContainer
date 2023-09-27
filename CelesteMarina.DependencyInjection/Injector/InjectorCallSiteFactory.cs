@@ -6,6 +6,7 @@ using System.Reflection;
 using CelesteMarina.DependencyInjection.CallSite;
 using CelesteMarina.DependencyInjection.Service;
 using Microsoft.Extensions.Logging;
+using IServiceProvider = CelesteMarina.DependencyInjection.Provider.IServiceProvider;
 
 namespace CelesteMarina.DependencyInjection.Injector
 {
@@ -17,7 +18,7 @@ namespace CelesteMarina.DependencyInjection.Injector
         private Dictionary<Type, InjectorCallSite> _CallSiteCache;
 
         private ICallSiteFactory _CallSiteFactory;
-        private ILogger<InjectorCallSiteFactory> _Logger;
+        private ILogger? _Logger;
 
         private const BindingFlags _AllInstance = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
@@ -104,6 +105,11 @@ namespace CelesteMarina.DependencyInjection.Injector
             return injectionPoints;
         }
 
+        public void OnInitialisationComplete(IServiceProvider provider)
+        {
+            _Logger = provider.GetService<ILogger<InjectorCallSiteFactory>>();
+        }
+        
         public InjectorCallSiteFactory(ILogger<InjectorCallSiteFactory> logger, ICallSiteFactory callSiteFactory)
         {
             _Logger = logger;

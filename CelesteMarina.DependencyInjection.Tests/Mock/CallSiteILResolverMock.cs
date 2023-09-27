@@ -8,6 +8,7 @@ using CelesteMarina.DependencyInjection.CallSite.Visitor;
 using CelesteMarina.DependencyInjection.Injector.Visitor;
 using CelesteMarina.DependencyInjection.Service;
 using CelesteMarina.DependencyInjection.Utility;
+using IServiceProvider = CelesteMarina.DependencyInjection.Provider.IServiceProvider;
 
 namespace CelesteMarina.DependencyInjection.Tests.Mock
 {
@@ -31,6 +32,11 @@ namespace CelesteMarina.DependencyInjection.Tests.Mock
             }
             
             AddConstant(context, constant.Value);
+        }
+
+        public void OnInitialisationComplete(IServiceProvider provider)
+        {
+            
         }
 
         private static void AddConstant(ILResolverContext context, object? constant)

@@ -7,6 +7,7 @@ using CelesteMarina.DependencyInjection.Service;
 using Microsoft.Extensions.Logging;
 using Xunit;
 using Xunit.Abstractions;
+using IServiceProvider = CelesteMarina.DependencyInjection.Provider.IServiceProvider;
 
 namespace CelesteMarina.DependencyInjection.Tests.Unit.Injector
 {
@@ -42,6 +43,11 @@ namespace CelesteMarina.DependencyInjection.Tests.Unit.Injector
             public void RemoveServices(IEnumerable<ServiceDescriptor> services)
             {
                 throw new NotSupportedException();
+            }
+
+            public void OnInitialisationComplete(IServiceProvider provider)
+            {
+                
             }
 
             public CallSiteFactory(int iVal, string sVal)

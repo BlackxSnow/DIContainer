@@ -18,8 +18,13 @@ namespace CelesteMarina.DependencyInjection.Provider.Engine
             throw new System.NotImplementedException();
         }
 
+        public override void OnInitialisationComplete(IServiceProvider provider)
+        {
+            Logger = provider.GetService<ILogger<RuntimeServiceProviderEngine>>();
+        }
+
         public RuntimeServiceProviderEngine(ICallSiteRuntimeResolver runtimeResolver,
-            ILogger<RuntimeServiceProviderEngine> logger) : base(runtimeResolver, logger)
+            ILogger<RuntimeServiceProviderEngine>? logger) : base(runtimeResolver, logger)
         {
             
         }
