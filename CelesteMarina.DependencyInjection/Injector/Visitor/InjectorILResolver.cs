@@ -28,11 +28,13 @@ namespace CelesteMarina.DependencyInjection.Injector.Visitor
         
         public void Build(InjectorCallSite callSite, ILInjectorContext context)
         {
+            if (callSite.IsEmpty()) return;
             VisitCallSite(callSite, context);
         }
 
         public ServiceInjector BuildDelegate(InjectorCallSite callSite)
         {
+            if (callSite.IsEmpty()) return (_,instance) => instance;
             if (_InjectorCache.TryGetValue(callSite.TargetType, out InjectorMethod method)) return method.Lambda;
             
             method = BuildMethod(callSite);
