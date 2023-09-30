@@ -268,7 +268,6 @@ namespace CelesteMarina.DependencyInjection.CallSite
             {
                 throw new InvalidOperationException(string.Format(Exceptions.NoValidConstructor, implementationType));
             }
-            Debug.Assert(bestParameterCallSites != null);
             InjectorCallSite? injectorCallSite = InjectorCallSiteFactory?.GetCallSite(implementationType);
             return new ConstructorCallSite(cacheInfo, injectorCallSite, identifier.ServiceType, bestConstructor, bestParameterCallSites!);
         }
