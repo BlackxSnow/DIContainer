@@ -88,5 +88,79 @@ namespace CelesteMarina.DependencyInjection.Tests.Integration
             var exception = Assert.Throws<InvalidOperationException>(provider.GetService<ResolveAndInjectTarget>);
             _TestOutputHelper.WriteLine(exception.ToString());
         }
+
+        [Fact]
+        public void Inject_Both()
+        {
+            var services = new ServiceCollection();
+            services.AddTransient<D1, D1>();
+            services.AddTransient<D2, D2>();
+            var provider = new ServiceProvider(services);
+
+            var instance = new ResolveAndInjectTarget(new D3());
+            
+            provider.InjectServices(instance);
+
+            Assert.NotNull(instance.MethodInjected);
+            Assert.NotNull(instance.PropertyInjected);
+        }
+        
+        [Fact]
+        public void Inject_Scoped()
+        {
+            var services = new ServiceCollection();
+            services.AddScoped<D1, D1>();
+            services.AddScoped<D2, D2>();
+            var provider = new ServiceProvider(services);
+
+            var instanceOne = new ResolveAndInjectTarget(new D3());
+            var instanceTwo = new ResolveAndInjectTarget(new D3());
+            
+            provider.InjectServices(instanceOne);
+            provider.InjectServices(instanceTwo);
+
+            Assert.Same(instanceOne.PropertyInjected, instanceTwo.PropertyInjected);
+            Assert.Same(instanceOne.MethodInjected, instanceTwo.MethodInjected);
+        }
+        
+        [Fact]
+        public void Inject_Scoped_NonRoot()
+        {
+            var services = new ServiceCollection();
+            services.AddScoped<D1, D1>();
+            services.AddScoped<D2, D2>();
+            var provider = new ServiceProvider(services);
+            IServiceProviderScope scope = provider.CreateScope();
+            IServiceInjector injector = scope.ServiceInjector;
+
+            var instanceOne = new ResolveAndInjectTarget(new D3());
+            var instanceTwo = new ResolveAndInjectTarget(new D3());
+            
+            injector.InjectServices(instanceOne);
+            injector.InjectServices(instanceTwo);
+
+            Assert.Same(instanceOne.PropertyInjected, instanceTwo.PropertyInjected);
+            Assert.Same(instanceOne.MethodInjected, instanceTwo.MethodInjected);
+        }
+        
+        [Fact]
+        public void Inject_Scoped_Different()
+        {
+            var services = new ServiceCollection();
+            services.AddScoped<D1, D1>();
+            services.AddScoped<D2, D2>();
+            var provider = new ServiceProvider(services);
+            IServiceProviderScope scope = provider.CreateScope();
+            IServiceInjector injector = scope.ServiceInjector;
+
+            var instanceOne = new ResolveAndInjectTarget(new D3());
+            var instanceTwo = new ResolveAndInjectTarget(new D3());
+            
+            provider.InjectServices(instanceOne);
+            injector.InjectServices(instanceTwo);
+
+            Assert.NotSame(instanceOne.PropertyInjected, instanceTwo.PropertyInjected);
+            Assert.NotSame(instanceOne.MethodInjected, instanceTwo.MethodInjected);
+        }
     }
 }
