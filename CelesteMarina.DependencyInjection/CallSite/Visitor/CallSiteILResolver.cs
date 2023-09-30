@@ -55,6 +55,12 @@ namespace CelesteMarina.DependencyInjection.CallSite.Visitor
 
         public void BuildInline(ServiceCallSite callSite, ILResolverContext context)
         {
+            if (callSite.CacheInfo.Location == CacheLocation.Scope)
+            {
+                VisitScopeCache(callSite, context);
+                return;
+            }
+            
             VisitCallSiteCache(callSite, context);
         }
 
@@ -76,7 +82,7 @@ namespace CelesteMarina.DependencyInjection.CallSite.Visitor
             _ScopeResolverCache.Add(callSite.CacheInfo.CacheKey, resolver);
             return resolver;
         }
-        
+
         private ResolverMethod BuildResolver(ServiceCallSite callSite)
         {
             using IDisposable? scope =
