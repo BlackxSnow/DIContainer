@@ -23,6 +23,12 @@ namespace CelesteMarina.DependencyInjection.Injector
         /// </summary>
         public PropertyInjectionPoint[]? PropertyInjectionPoints { get; }
 
+        public bool IsEmpty()
+        {
+            if (MethodInjectionPoint?.Method != null) return false;
+            return PropertyInjectionPoints?.Any() == true;
+        }
+        
         public InjectorCallSite(Type target, MethodInjectionPoint? methodPoint, PropertyInjectionPoint[]? propertyPoints)
         {
             TargetType = target;
