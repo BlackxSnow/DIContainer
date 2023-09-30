@@ -31,6 +31,11 @@ namespace CelesteMarina.DependencyInjection.Tests.Unit.CallSite
             {
                 
             }
+
+            public void Inject(InjectorCallSite callSite, ServiceProviderScope scope, object? instance)
+            {
+                
+            }
         }
 
         private class IntService

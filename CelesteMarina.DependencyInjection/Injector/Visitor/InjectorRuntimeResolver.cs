@@ -1,6 +1,7 @@
 using System.Reflection;
 using CelesteMarina.DependencyInjection.CallSite;
 using CelesteMarina.DependencyInjection.CallSite.Visitor;
+using CelesteMarina.DependencyInjection.Provider;
 
 namespace CelesteMarina.DependencyInjection.Injector.Visitor
 {
@@ -14,9 +15,16 @@ namespace CelesteMarina.DependencyInjection.Injector.Visitor
         
         public void Inject(InjectorCallSite callSite, InjectorRuntimeResolverContext context)
         {
+            if (context.Instance == null) return;
             VisitCallSite(callSite, context);
         }
-        
+
+        public void Inject(InjectorCallSite callSite, ServiceProviderScope scope, object? instance)
+        {
+            Inject(callSite, new InjectorRuntimeResolverContext(scope, instance));
+        }
+
+
         protected override void VisitMethod(InjectorCallSite callSite, InjectorRuntimeResolverContext context)
         {
             if (callSite.MethodInjectionPoint == null) return;
