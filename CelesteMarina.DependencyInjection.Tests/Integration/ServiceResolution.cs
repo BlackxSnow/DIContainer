@@ -1,5 +1,6 @@
 using System;
 using CelesteMarina.DependencyInjection.Extensions;
+using CelesteMarina.DependencyInjection.Injector;
 using CelesteMarina.DependencyInjection.Provider;
 using CelesteMarina.DependencyInjection.Service;
 using Microsoft.Extensions.Logging;
@@ -44,6 +45,28 @@ namespace CelesteMarina.DependencyInjection.Tests.Integration
             Assert.Equal(expected, scope.ServiceProvider.GetService<int>());
         }
 
+        [Fact]
+        public void ResolveIServiceInjector_Scoped()
+        {
+            var services = new ServiceCollection();
+            IServiceProvider provider = new ServiceProvider(services);
+            var scopeFactory = provider.GetService<IServiceProviderScopeFactory>();
+            
+            IServiceProviderScope scopeOne = scopeFactory!.CreateScope();
+            IServiceProviderScope scopeTwo = scopeFactory!.CreateScope();
+
+            var rootInjector = provider.GetService<IServiceInjector>();
+            var scopeOneInjector = scopeOne.ServiceProvider.GetService<IServiceInjector>();
+            var scopeTwoInjector = scopeTwo.ServiceProvider.GetService<IServiceInjector>();
+
+            Assert.Same(scopeOne.ServiceInjector, scopeOneInjector);
+            Assert.Same(scopeTwo.ServiceInjector, scopeTwoInjector);
+            
+            Assert.NotSame(rootInjector, scopeOneInjector);
+            Assert.NotSame(scopeOneInjector, scopeTwoInjector);
+            Assert.NotSame(scopeTwoInjector, rootInjector);
+        }
+        
         [Fact]
         public void ResolveInvalidTypeFactoryGeneric()
         {
