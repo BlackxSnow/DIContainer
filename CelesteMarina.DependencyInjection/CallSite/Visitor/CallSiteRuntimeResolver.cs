@@ -45,6 +45,11 @@ namespace CelesteMarina.DependencyInjection.CallSite.Visitor
             return context.Scope;
         }
 
+        protected override object? VisitServiceInjector(ServiceInjectorCallSite callSite, RuntimeResolverContext context)
+        {
+            return context.Scope;
+        }
+
         protected override object? VisitEnumerable(EnumerableCallSite callSite, RuntimeResolverContext context)
         {
             var results = Array.CreateInstance(callSite.SingleServiceType, callSite.CallSites.Length);

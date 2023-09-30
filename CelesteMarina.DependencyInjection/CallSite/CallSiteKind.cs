@@ -6,6 +6,7 @@ namespace CelesteMarina.DependencyInjection.CallSite
         Constructor,
         Factory,
         Enumerable,
-        ServiceProvider
+        ServiceProvider,
+        ServiceInjector
     }
 }

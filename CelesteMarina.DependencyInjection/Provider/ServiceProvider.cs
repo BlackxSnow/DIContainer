@@ -178,6 +178,7 @@ namespace CelesteMarina.DependencyInjection.Provider
             CallSiteFactory = callSiteFactory;
             
             callSiteFactory.AddService(new ServiceIdentifier(typeof(IServiceProvider)), new ServiceProviderCallSite());
+            callSiteFactory.AddService(new ServiceIdentifier(typeof(IServiceInjector)), new ServiceInjectorCallSite());
             callSiteFactory.AddService(new ServiceIdentifier(typeof(IServiceProviderScopeFactory)),
                 new ConstantCallSite(typeof(IServiceProviderScopeFactory), RootScope));
             

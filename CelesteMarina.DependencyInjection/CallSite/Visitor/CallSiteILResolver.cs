@@ -250,6 +250,13 @@ namespace CelesteMarina.DependencyInjection.CallSite.Visitor
             return null;
         }
 
+        protected override object? VisitServiceInjector(ServiceInjectorCallSite callSite, ILResolverContext context)
+        {
+            _Logger?.LogTrace("Visiting ServiceInjector");
+            context.Generator.Emit(OpCodes.Ldarg_1);
+            return null;
+        }
+
         protected override object? VisitEnumerable(EnumerableCallSite callSite, ILResolverContext context)
         {
             using IDisposable? scope =

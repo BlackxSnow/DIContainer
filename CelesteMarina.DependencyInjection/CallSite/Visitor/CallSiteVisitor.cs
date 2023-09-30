@@ -45,6 +45,7 @@ namespace CelesteMarina.DependencyInjection.CallSite.Visitor
                 CallSiteKind.Factory => VisitFactory((FactoryCallSite)callSite, context),
                 CallSiteKind.Enumerable => VisitEnumerable((EnumerableCallSite)callSite, context),
                 CallSiteKind.ServiceProvider => VisitServiceProvider((ServiceProviderCallSite)callSite, context),
+                CallSiteKind.ServiceInjector => VisitServiceInjector((ServiceInjectorCallSite)callSite, context),
                 _ => throw new ArgumentOutOfRangeException()
             };
         }
@@ -87,6 +88,7 @@ namespace CelesteMarina.DependencyInjection.CallSite.Visitor
         protected abstract TResult VisitConstructor(ConstructorCallSite callSite, TContext context);
         protected abstract TResult VisitConstant(ConstantCallSite callSite, TContext context);
         protected abstract TResult VisitServiceProvider(ServiceProviderCallSite callSite, TContext context);
+        protected abstract TResult VisitServiceInjector(ServiceInjectorCallSite callSite, TContext context);
         protected abstract TResult VisitEnumerable(EnumerableCallSite callSite, TContext context);
         protected abstract TResult VisitFactory(FactoryCallSite callSite, TContext context);
         
