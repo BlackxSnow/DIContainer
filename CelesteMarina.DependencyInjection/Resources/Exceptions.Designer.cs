@@ -104,5 +104,11 @@ namespace CelesteMarina.DependencyInjection {
                 return ResourceManager.GetString("InjectionPropertyNoSetter", resourceCulture);
             }
         }
+        
+        internal static string MissingRequiredInjectionServiceType {
+            get {
+                return ResourceManager.GetString("MissingRequiredInjectionServiceType", resourceCulture);
+            }
+        }
     }
 }

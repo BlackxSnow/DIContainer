@@ -48,4 +48,7 @@
     <data name="InjectionPropertyNoSetter" xml:space="preserve">
         <value>Injection property {0} within {1} has no accessible setter</value>
     </data>
+    <data name="MissingRequiredInjectionServiceType" xml:space="preserve">
+        <value>Type {0} contains required injection type {1} which cannot be resolved</value>
+    </data>
 </root>

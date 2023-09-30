@@ -67,7 +67,9 @@ namespace CelesteMarina.DependencyInjection.Injector
             {
                 var parameterServiceIdentifier = new ServiceIdentifier(parameters[i].ParameterType);
                 ServiceCallSite? parameterCallSite = _CallSiteFactory.GetCallSite(parameterServiceIdentifier);
-                parameterCallSites[i] = parameterCallSite;
+                parameterCallSites[i] = parameterCallSite ?? throw new InvalidOperationException(
+                    string.Format(Exceptions.MissingRequiredInjectionServiceType, type,
+                        parameterServiceIdentifier.ServiceType));
             }
 
             return new MethodInjectionPoint(method, parameterCallSites);
@@ -94,6 +96,11 @@ namespace CelesteMarina.DependencyInjection.Injector
                 PropertyInfo property = injectionProperties[i];
                 var propertyIdentifier = new ServiceIdentifier(property.PropertyType);
                 ServiceCallSite? propertyCallSite = _CallSiteFactory.GetCallSite(propertyIdentifier);
+                
+                if (propertyCallSite == null)
+                    throw new InvalidOperationException(string.Format(Exceptions.MissingRequiredInjectionServiceType,
+                        type, propertyIdentifier.ServiceType));
+                
                 if (property.SetMethod == null)
                 {
                     throw new InvalidOperationException(
