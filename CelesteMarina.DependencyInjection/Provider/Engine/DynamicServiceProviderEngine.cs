@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using CelesteMarina.DependencyInjection.CallSite;
 using CelesteMarina.DependencyInjection.CallSite.Visitor;
+using CelesteMarina.DependencyInjection.Injector;
 using Microsoft.Extensions.Logging;
 
 namespace CelesteMarina.DependencyInjection.Provider.Engine
@@ -34,6 +35,29 @@ namespace CelesteMarina.DependencyInjection.Provider.Engine
             _ServiceProvider.ReplaceServiceAccessor(callSite, resolver);
         }
 
+        public override ServiceInjector BuildInjector(InjectorCallSite callSite)
+        {
+            var callCount = 0;
+            return (scope, instance) =>
+            {
+                using IDisposable? logScope =
+                    Logger?.BeginScope("Building injector for {CallSiteServiceType}", callSite.TargetType);
+                RuntimeResolver.RuntimeInjector.Inject(callSite, scope, instance);
+
+                if (Interlocked.Increment(ref callCount) != 1) return instance;
+
+                Logger?.LogDebug("Starting compiled injector build");
+                Task.Run(() => BuildCompiledInjector(callSite));
+                return instance;
+            };
+        }
+
+        private void BuildCompiledInjector(InjectorCallSite callSite)
+        {
+            ServiceInjector injector = ILResolver.ILInjector.BuildDelegate(callSite);
+            _ServiceProvider.ReplaceServiceInjector(callSite, injector);
+        }
+        
         public override void OnInitialisationComplete(IServiceProvider provider)
         {
             Logger = provider.GetService<ILogger<DynamicServiceProviderEngine>>();

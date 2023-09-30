@@ -27,6 +27,7 @@ namespace CelesteMarina.DependencyInjection.Provider
         private IServiceProviderEngine _Engine;
         private HashSet<ITemporaryServiceContainer> _ActiveTemporaryContainers;
         private ConcurrentDictionary<ServiceIdentifier, ServiceAccessor> _ServiceAccessors;
+        private ConcurrentDictionary<Type, ServiceInjectionAccessor> _ServiceInjectors;
 
         private ILogger? _Logger;
 
@@ -51,6 +52,14 @@ namespace CelesteMarina.DependencyInjection.Provider
             return accessor.Resolver?.Invoke(scope);
         }
 
+        public void InjectServices(object instance) => InjectServices(instance, RootScope);
+        public void InjectServices(object instance, ServiceProviderScope scope)
+        {
+            Type targetType = instance.GetType();
+            _Logger?.LogTrace("InjectServices: {Type} ({Instance})", targetType, instance);
+            ServiceInjectionAccessor accessor = _ServiceInjectors.GetOrAdd(targetType, BuildServiceInjector);
+            accessor.Injector.Invoke(scope, instance);
+        }
         
         public void AddTemporaryServices(ITemporaryServiceContainer container)
         {
@@ -102,7 +111,7 @@ namespace CelesteMarina.DependencyInjection.Provider
             ServiceCallSite? callSite = CallSiteFactory.GetCallSite(identifier);
             if (callSite == null)
             {
-                _Logger?.LogDebug("Service type does not exist - returning null");
+                _Logger?.LogDebug("Service type does not exist - returning null accessor");
                 return new ServiceAccessor { CallSite = callSite, Resolver = _ => null };
             }
 
@@ -118,6 +127,16 @@ namespace CelesteMarina.DependencyInjection.Provider
             return new ServiceAccessor() { CallSite = callSite, Resolver = resolver };
         }
 
+        private ServiceInjectionAccessor BuildServiceInjector(Type targetType)
+        {
+            using IDisposable? scope = _Logger?.BeginScope("Building ServiceInjector for {TargetType}",
+                targetType);
+            InjectorCallSite callSite = InjectorCallSiteFactory.GetCallSite(targetType);
+            
+            _Logger?.LogTrace("Building injector via engine");
+            return new ServiceInjectionAccessor(callSite, _Engine.BuildInjector(callSite));
+        }
+        
         internal void ReplaceServiceAccessor(ServiceCallSite callSite, ServiceResolver resolver)
         {
             _Logger?.LogDebug(
@@ -128,6 +147,12 @@ namespace CelesteMarina.DependencyInjection.Provider
                 CallSite = callSite,
                 Resolver = resolver
             };
+        }
+
+        internal void ReplaceServiceInjector(InjectorCallSite callSite, ServiceInjector injector)
+        {
+            _Logger?.LogDebug("Replacing injector for {CallSiteTargetType}", callSite.TargetType);
+            _ServiceInjectors[callSite.TargetType] = new ServiceInjectionAccessor(callSite, injector);
         }
 
         private void ReplaceInitialisationLoggers()
@@ -157,6 +182,7 @@ namespace CelesteMarina.DependencyInjection.Provider
                 new ConstantCallSite(typeof(IServiceProviderScopeFactory), RootScope));
             
             _ServiceAccessors = new ConcurrentDictionary<ServiceIdentifier, ServiceAccessor>();
+            _ServiceInjectors = new ConcurrentDictionary<Type, ServiceInjectionAccessor>();
             _ActiveTemporaryContainers = new HashSet<ITemporaryServiceContainer>();
 
             var runtimeResolver = new CallSiteRuntimeResolver(res => new InjectorRuntimeResolver(res));
@@ -182,11 +208,11 @@ namespace CelesteMarina.DependencyInjection.Provider
             
             RootScope = new ServiceProviderScope(this, true);
             _ServiceAccessors = new ConcurrentDictionary<ServiceIdentifier, ServiceAccessor>();
+            _ServiceInjectors = new ConcurrentDictionary<Type, ServiceInjectionAccessor>();
             _ActiveTemporaryContainers = new HashSet<ITemporaryServiceContainer>();
             CallSiteFactory = callSiteFactory;
             InjectorCallSiteFactory = injectorCallSiteFactory;
             _Engine = engine;
         }
-
     }
 }

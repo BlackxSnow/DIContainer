@@ -1,14 +1,17 @@
 using System;
 using System.Collections.Generic;
+using CelesteMarina.DependencyInjection.Injector;
 using CelesteMarina.DependencyInjection.Service;
 
 namespace CelesteMarina.DependencyInjection.Provider
 {
-    public class ServiceProviderScope : IServiceProviderScope, IServiceProvider, IServiceProviderScopeFactory
+    public class ServiceProviderScope : IServiceProviderScope, IServiceProvider, IServiceInjector,
+        IServiceProviderScopeFactory
     {
         public bool IsRootScope { get; }
         public bool IsDisposed { get; private set; }
         public IServiceProvider ServiceProvider => this;
+        public IServiceInjector ServiceInjector => this;
         
         internal readonly IRootServiceProvider RootProvider;
         internal Dictionary<ServiceCacheKey, object?> ResolvedServices;
@@ -22,6 +25,11 @@ namespace CelesteMarina.DependencyInjection.Provider
         public object? GetService(Type type)
         {
             return RootProvider.GetService(type, this);
+        }
+        
+        public void InjectServices(object instance)
+        {
+            RootProvider.InjectServices(instance, this);
         }
 
         public void Dispose()

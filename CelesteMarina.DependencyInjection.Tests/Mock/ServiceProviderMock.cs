@@ -9,6 +9,9 @@ namespace CelesteMarina.DependencyInjection.Tests.Mock
 
         public object GetService(Type type) => throw new NotSupportedException();
         public object GetService(Type type, ServiceProviderScope scope) => throw new NotSupportedException();
+        public void InjectServices(object instance, ServiceProviderScope scope) => throw new NotSupportedException();
+
+        public void InjectServices(object instance) => throw new NotSupportedException();
 
         public bool IsDisposed { get; private set; }
         public event Action Disposed;
