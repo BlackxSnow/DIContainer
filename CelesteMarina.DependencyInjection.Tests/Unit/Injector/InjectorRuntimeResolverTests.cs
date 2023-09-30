@@ -20,6 +20,8 @@ namespace CelesteMarina.DependencyInjection.Tests.Unit.Injector
 
         private class CallSiteResolver : ICallSiteRuntimeResolver
         {
+            public IInjectorRuntimeResolver RuntimeInjector { get; }
+
             public object Resolve(ServiceCallSite callSite, ServiceProviderScope scope)
             {
                 if (callSite is ConstantCallSite constant) return constant.Value;

@@ -1,3 +1,4 @@
+using CelesteMarina.DependencyInjection.Injector.Visitor;
 using CelesteMarina.DependencyInjection.Provider;
 
 namespace CelesteMarina.DependencyInjection.CallSite.Visitor
@@ -5,8 +6,9 @@ namespace CelesteMarina.DependencyInjection.CallSite.Visitor
     /// <summary>
     /// Provides immediate, runtime service resolution from <see cref="ServiceCallSite">ServiceCallSites</see>. 
     /// </summary>
-    public interface ICallSiteRuntimeResolver
+    internal interface ICallSiteRuntimeResolver
     {
+        IInjectorRuntimeResolver RuntimeInjector { get; }
         /// <summary>
         /// Attempts to immediately resolve the service described by <paramref name="callSite"/>.
         /// </summary>

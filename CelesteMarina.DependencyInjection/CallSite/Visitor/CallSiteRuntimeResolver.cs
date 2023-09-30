@@ -12,7 +12,7 @@ namespace CelesteMarina.DependencyInjection.CallSite.Visitor
     /// </summary>
     internal class CallSiteRuntimeResolver : CallSiteVisitor<RuntimeResolverContext, object?>, ICallSiteRuntimeResolver
     {
-        public IInjectorRuntimeResolver InjectorResolver { get; }
+        public IInjectorRuntimeResolver RuntimeInjector { get; }
 
         public object? Resolve(ServiceCallSite callSite, ServiceProviderScope scope)
         {
@@ -30,7 +30,7 @@ namespace CelesteMarina.DependencyInjection.CallSite.Visitor
             }
 
             object? result = callSite.ConstructorInfo.Invoke(arguments);
-            InjectorResolver.Inject(callSite.InjectorCallSite,
+            RuntimeInjector.Inject(callSite.InjectorCallSite,
                 new InjectorRuntimeResolverContext(context.Scope, result));
             return result;
         }
@@ -96,7 +96,7 @@ namespace CelesteMarina.DependencyInjection.CallSite.Visitor
 
         public CallSiteRuntimeResolver(Func<CallSiteRuntimeResolver, IInjectorRuntimeResolver> injectorResolverBuilder)
         {
-            InjectorResolver = injectorResolverBuilder(this);
+            RuntimeInjector = injectorResolverBuilder(this);
         }
     }
 }
