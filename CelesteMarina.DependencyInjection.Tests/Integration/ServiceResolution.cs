@@ -90,5 +90,16 @@ namespace CelesteMarina.DependencyInjection.Tests.Integration
             var exception = Assert.ThrowsAny<Exception>(() => provider.GetService(typeof(SingleDependency)));
             _TestOutputHelper.WriteLine(exception.ToString());
         }
+        
+        [Fact]
+        public void ResolveWithMissingDependency()
+        {
+            var services = new ServiceCollection();
+            services.AddTransient<SingleDependency, SingleDependency>();
+            IServiceProvider provider = new ServiceProvider(services);
+
+            var exception = Assert.Throws<InvalidOperationException>(() => provider.GetService(typeof(SingleDependency)));
+            _TestOutputHelper.WriteLine(exception.ToString());
+        }
     }
 }
